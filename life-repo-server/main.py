@@ -2,9 +2,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import logging
 import os
+import json
 import uvicorn
+import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,9 +28,11 @@ if environment == "dev":
     )
 
 
-@app.get("/test")
-async def test_route():
-    return {"message": "This is a test route"}
+@app.get("/config")
+async def get_config():
+    with open("config.json", "r") as file:
+        data = json.load(file)
+    return data
 
 
 app.include_router(file_io_router, prefix="/paths")
