@@ -3,7 +3,7 @@ import { Button, TextInput, Text, View } from "react-native";
 import useConfig from "../hooks/useConfig";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { Paragraph } from "../components/base-elements/text";
-import { Input } from "../components/base-elements/input";
+import { Input } from "../components/inputs/input";
 
 interface ConfigPageProps {}
 

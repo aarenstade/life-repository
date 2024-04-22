@@ -36,8 +36,6 @@ const fetchAPI = async (url: string, endpointName: string, params?: any, method:
       endpoint = params ? endpoint + parseParams(params) : endpoint;
     }
 
-    options["next"] = { revalidate: 30 }; // revalidate cache every 30 seconds
-
     const res = await fetch(endpoint, options);
     if (res.status === 200) {
       if (dataType === "blob") {
