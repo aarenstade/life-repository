@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers.file_io import router as file_io_router
+from routers.transcribe import router as transcribe_router
 
 app = FastAPI()
 
@@ -36,6 +37,7 @@ async def get_config():
 
 
 app.include_router(file_io_router, prefix="/paths")
+app.include_router(transcribe_router, prefix="/transcribe")
 
 
 if __name__ == "__main__":
