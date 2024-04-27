@@ -1,5 +1,5 @@
 import { FC, useState } from "react";
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet } from "react-native";
 import ImageCameraPicker from "../components/photos/ImageCameraPicker";
 import { AddFilesPageProps } from "../App";
 import FileGrid from "../components/photos/FileGrid";
@@ -50,33 +50,56 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   };
 
   let view;
+  const styles = StyleSheet.create({
+    selectImagesContainer: {
+      flex: 1,
+      justifyContent: "space-between",
+    },
+    annotateGroupContainer: {
+      padding: 20,
+    },
+    groupDetailsText: {
+      fontSize: 20,
+      fontWeight: "bold",
+      marginBottom: 16,
+    },
+    input: {
+      height: 40,
+      borderColor: "gray",
+      borderWidth: 1,
+      marginBottom: 20,
+    },
+    inputMargin: {
+      marginBottom: 20,
+    },
+  });
 
-  if (step == "select-images") {
+  if (step === "select-images") {
     view = (
-      <View className='flex flex-col justify-between'>
+      <View style={styles.selectImagesContainer}>
         <ImageCameraPicker defaultImages={images} onImagesChanged={setImages} />
       </View>
     );
   }
 
-  if (step == "annotate-group") {
+  if (step === "annotate-group") {
     view = (
-      <View style={{ padding: 20 }}>
-        <Text className='text-xl font-bold mb-4'>Group Details</Text>
+      <View style={styles.annotateGroupContainer}>
+        <Text style={styles.groupDetailsText}>Group Details</Text>
         <TextInput
-          style={{ height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20 }}
+          style={styles.input}
           onChangeText={(text) => setGroupData({ ...groupData, title: text })}
           value={groupData.title}
           placeholder='Enter title'
         />
         <TextInput
-          style={{ height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20 }}
+          style={[styles.input, styles.inputMargin]}
           onChangeText={(text) => setGroupData({ ...groupData, description: text })}
           value={groupData.description}
           placeholder='Enter description'
         />
         <TextInput
-          style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
+          style={styles.input}
           onChangeText={(text) => setGroupData({ ...groupData, tags: text.split(",") })}
           value={groupData.tags.join(",")}
           placeholder='Enter tags, separated by commas'
@@ -88,22 +111,58 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   if (step == "annotate-images") {
     view = <View></View>;
   }
+  const mainStyles = StyleSheet.create({
+    container: {
+      flexGrow: 1,
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      flexDirection: "column",
+      justifyContent: "space-between",
+      height: "100%",
+    },
+    buttonContainer: {
+      flexGrow: 1,
+      marginTop: 8,
+    },
+    button: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 8,
+      borderRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 4,
+    },
+    continueButton: {
+      backgroundColor: "#007bff",
+    },
+    cancelButton: {
+      backgroundColor: "#6c757d",
+    },
+    buttonText: {
+      color: "#ffffff",
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+  });
 
   return (
-    <View className='py-4 mx-4 flex flex-col justify-between h-full'>
+    <View style={mainStyles.container}>
       {view}
       <ScrollView>{images && <FileGrid files_uris={images} />}</ScrollView>
-      <View className='space-y-4'>
+      <View style={mainStyles.buttonContainer}>
         {images.length > 0 && (
-          <TouchableOpacity className='flex flex-row justify-center items-center p-2 bg-blue-500 rounded-lg shadow-lg' onPress={handleNextStep}>
-            <Text style={{ color: "#ffffff", fontWeight: "bold", textAlign: "center" }}>Continue</Text>
+          <TouchableOpacity style={[mainStyles.button, mainStyles.continueButton]} onPress={handleNextStep}>
+            <Text style={mainStyles.buttonText}>Continue</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
-          className='flex flex-row justify-center items-center p-2 bg-gray-500 rounded-lg shadow-lg'
+          style={[mainStyles.button, mainStyles.cancelButton]}
           onPress={() => (step == "select-images" ? handleCancel() : handlePreviousStep())}
         >
-          <Text style={{ color: "#ffffff", fontWeight: "bold", textAlign: "center" }}>{step == "select-images" ? "Cancel" : "Back"}</Text>
+          <Text style={mainStyles.buttonText}>{step == "select-images" ? "Cancel" : "Back"}</Text>
         </TouchableOpacity>
       </View>
     </View>

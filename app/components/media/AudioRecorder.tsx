@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { View, Button, Alert, ActivityIndicator, Text } from "react-native";
+import { View, Button, Alert, ActivityIndicator, Text, StyleSheet } from "react-native";
 import useAudioRecorder from "../../hooks/useAudioRecorder";
 import { Audio } from "expo-av";
 
@@ -162,20 +162,46 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       return null;
     }
   };
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16,
+      borderColor: "#e2e8f0",
+      borderWidth: 1,
+      borderRadius: 8,
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      shadowColor: "#000",
+      shadowOffset: { height: 0, width: 0 },
+      margin: 4,
+    },
+    buttonContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      margin: 4,
+    },
+    text: {
+      fontSize: 18,
+      fontWeight: "bold",
+      margin: 4,
+    },
+  });
 
   return (
-    <View className='flex flex-col items-center justify-center space-y-4 p-4 border border-gray-200 rounded-lg shadow'>
+    <View style={styles.container}>
       {loading ? (
         <ActivityIndicator size='large' color='#0000ff' />
       ) : (
-        <View className='space-y-4'>
-          <View className='flex flex-row space-x-2'>
+        <View style={{ margin: 4 }}>
+          <View style={styles.buttonContainer}>
             {!recording && <Button title='Record' onPress={handleRecordingAction} color='green' />}
             {recording && <Button title={isPaused ? "Resume" : "Pause"} onPress={handleRecordingAction} color={isPaused ? "green" : "blue"} />}
             <Button title='Stop' onPress={handleStopRecording} disabled={!recording} color='red' />
             <Button title='Reset' onPress={handleReset} color='grey' />
           </View>
-          <Text className='text-lg font-semibold'>{formatDuration(duration)}</Text>
+          <Text style={styles.text}>{formatDuration(duration)}</Text>
           {playbackInstance && (
             <>
               <Button title={isPlaying ? "Pause" : "Play"} onPress={handlePlayPauseToggle} />

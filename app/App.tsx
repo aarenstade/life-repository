@@ -4,7 +4,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { NativeStackScreenProps, createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import HomePage from "./pages/HomePage";
-import { TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import ConfigPage from "./pages/ConfigPage";
 import useConfig from "./hooks/useConfig";
@@ -30,15 +30,25 @@ export type AddFilesPageProps = NativeStackScreenProps<PageParams, "add_files">;
 export default function App() {
   const config = useConfig();
 
+  const styles = StyleSheet.create({
+    headerRightContainer: {
+      flexDirection: "row",
+      marginRight: 10,
+    },
+    loadingIndicator: {
+      marginRight: 10,
+    },
+  });
+
   const globalScreenOptions = ({ route, navigation }) => ({
     title: route.name
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" "),
     headerRight: () => (
-      <View className='flex flex-row space-x-4'>
+      <View style={styles.headerRightContainer}>
         {config.loading ? (
-          <LoadingIndicator style={{ marginRight: 10 }} />
+          <LoadingIndicator style={styles.loadingIndicator} />
         ) : config.connected ? (
           <Feather name='check' size={24} color='green' />
         ) : (

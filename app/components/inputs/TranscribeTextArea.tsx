@@ -1,9 +1,8 @@
 import { FC } from "react";
-
 import { useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import useAudioRecorder from "../../hooks/useAudioRecorder";
-import { TextInput, TouchableOpacity, View } from "react-native";
+import { TextInput, TouchableOpacity, View, StyleSheet } from "react-native";
 import useConfigStore from "../../state/config";
 
 interface RecordIconProps {
@@ -24,7 +23,6 @@ const RecordIcon: FC<RecordIconProps> = ({ onTranscriptionComplete }) => {
     let fileType = uriParts[uriParts.length - 1];
 
     let formData = new FormData();
-
     // @ts-ignore
     formData.append("file", {
       uri,
@@ -59,7 +57,7 @@ const RecordIcon: FC<RecordIconProps> = ({ onTranscriptionComplete }) => {
     if (recording) {
       setIsLoading(true);
       await stopRecording();
-      const transcription = await transcribeRecording(); // Assuming transcribe is an async function that returns a string
+      const transcription = await transcribeRecording();
       onTranscriptionComplete(transcription || "");
       setIsLoading(false);
     } else {
@@ -70,7 +68,7 @@ const RecordIcon: FC<RecordIconProps> = ({ onTranscriptionComplete }) => {
   return (
     <View>
       {isLoading ? (
-        <Feather name='loader' size={24} className='animate-spin' />
+        <Feather name='loader' size={24} style={styles.iconLoading} />
       ) : recording && !isPaused ? (
         <TouchableOpacity onPress={handleRecord}>
           <Feather name='mic' size={24} color={"red"} />
@@ -100,18 +98,34 @@ const TranscribeTextArea: FC<TranscribeTextAreaProps> = ({ initialText }) => {
   };
 
   return (
-    <View className='grow relative w-full'>
-      <TextInput
-        multiline={true}
-        style={{ borderWidth: 1, padding: 8, borderRadius: 4, height: 96, width: "100%" }}
-        value={value}
-        onChangeText={setValue}
-      />
-      <View className='absolute bottom-2 right-2'>
+    <View style={styles.container}>
+      <TextInput multiline={true} style={styles.textInput} value={value} onChangeText={setValue} />
+      <View style={styles.recordIcon}>
         <RecordIcon onTranscriptionComplete={handleNewTranscriptText} />
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    position: "relative",
+    width: "100%",
+  },
+  textInput: {
+    borderWidth: 1,
+    padding: 8,
+    borderRadius: 4,
+    height: 96,
+    width: "100%",
+  },
+  recordIcon: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+  },
+  iconLoading: {},
+});
 
 export default TranscribeTextArea;

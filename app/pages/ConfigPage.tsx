@@ -1,5 +1,5 @@
 import React, { useState, FC } from "react";
-import { Button, TextInput, Text, View } from "react-native";
+import { Button, TextInput, Text, View, StyleSheet } from "react-native";
 import useConfig from "../hooks/useConfig";
 import LoadingIndicator from "../components/LoadingIndicator";
 
@@ -24,27 +24,67 @@ const ConfigPage: FC<ConfigPageProps> = () => {
     return <LoadingIndicator text='Loading...' />;
   }
 
+  const styles = StyleSheet.create({
+    container: {
+      flexGrow: 1,
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      margin: 4,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "bold",
+      marginBottom: 4,
+    },
+    errorText: {
+      color: "#ef4444", // red-500
+      textAlign: "center",
+    },
+    successText: {
+      color: "#22c55e", // green-500
+      textAlign: "center",
+      fontSize: 12,
+    },
+    inputContainer: {
+      width: "80%",
+      alignItems: "center",
+    },
+    input: {
+      backgroundColor: "white",
+      borderColor: "#6b7280", // gray-500
+      borderWidth: 1,
+      flexGrow: 1,
+      marginTop: 4,
+      marginBottom: 2,
+      width: "100%",
+    },
+    apiUrlText: {
+      marginVertical: 8,
+    },
+  });
+
   return (
-    <View className='flex flex-col justify-center items-center m-4'>
-      <Text className='text-xl font-bold mb-4'>API Url</Text>
-      {config.error && <Text className='text-red-500 text-center'>{config.error}</Text>}
-      {config.connected && config.data && <Text className='text-green-500 text-center text-xs'>Successfully Connected</Text>}
-      <View style={{ width: "80%", alignItems: "center" }}>
+    <View style={styles.container}>
+      <Text style={styles.title}>API Url</Text>
+      {config.error && <Text style={styles.errorText}>{config.error}</Text>}
+      {config.connected && config.data && <Text style={styles.successText}>Successfully Connected</Text>}
+      <View style={styles.inputContainer}>
         {!config.api_url ? (
           <>
-            <TextInput placeholder='Set API URL' value={newApiUrl} onChangeText={setNewApiUrl} autoCapitalize='none' className='mt-4 mb-2 w-full' />
+            <TextInput placeholder='Set API URL' value={newApiUrl} onChangeText={setNewApiUrl} autoCapitalize='none' style={styles.input} />
             <Button onPress={() => testConnection()} title='Save' />
           </>
         ) : (
           <>
             {!isEditing ? (
               <>
-                <Text style={{ marginVertical: 8 }}>{config.api_url}</Text>
+                <Text style={styles.apiUrlText}>{config.api_url}</Text>
                 <Button onPress={() => setIsEditing(true)} title='Edit' />
               </>
             ) : (
               <>
-                <TextInput value={newApiUrl} onChangeText={setNewApiUrl} autoCapitalize='none' className='mt-4 mb-2 w-full' />
+                <TextInput value={newApiUrl} onChangeText={setNewApiUrl} autoCapitalize='none' style={styles.input} />
                 <Button onPress={() => testConnection()} title='Save' />
               </>
             )}

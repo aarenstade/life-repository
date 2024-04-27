@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect } from "react";
-import { View, Alert, TouchableOpacity, Text } from "react-native";
+import { View, Alert, TouchableOpacity, Text, StyleSheet } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import { Feather } from "@expo/vector-icons";
@@ -66,15 +66,43 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ defaultImages, onImages
     }
   };
 
+  const styles = StyleSheet.create({
+    button: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 10,
+      borderRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    selectButton: {
+      backgroundColor: "#007bff", // Blue
+    },
+    photoButton: {
+      backgroundColor: "#28a745", // Green
+      marginTop: 16,
+    },
+    buttonText: {
+      color: "white",
+      paddingLeft: 8,
+    },
+    icon: {
+      color: "white",
+    },
+  });
+
   return (
     <View>
-      <TouchableOpacity onPress={pickMultipleImages} className='flex flex-row justify-center items-center p-2 bg-blue-500 rounded-lg shadow-lg'>
-        <Feather name='image' size={24} color='white' />
-        <Text className='text-white pl-2'>Select Images</Text>
+      <TouchableOpacity onPress={pickMultipleImages} style={[styles.button, styles.selectButton]}>
+        <Feather name='image' size={24} style={styles.icon} />
+        <Text style={styles.buttonText}>Select Images</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={takePhoto} className='flex flex-row justify-center items-center p-2 bg-green-500 rounded-lg shadow-lg mt-4'>
-        <Feather name='camera' size={24} color='white' />
-        <Text className='text-white pl-2'>Take Photo</Text>
+      <TouchableOpacity onPress={takePhoto} style={[styles.button, styles.photoButton]}>
+        <Feather name='camera' size={24} style={styles.icon} />
+        <Text style={styles.buttonText}>Take Photo</Text>
       </TouchableOpacity>
       {showImages && <FileGrid files_uris={images} />}
     </View>

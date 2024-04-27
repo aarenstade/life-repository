@@ -1,5 +1,5 @@
 import { FC, useCallback } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
 
 interface CardButtonProps {
   icon: JSX.Element;
@@ -13,13 +13,41 @@ const CardButton: FC<CardButtonProps> = ({ icon, title, subtitle, onClick }) => 
     onClick();
   }, [onClick]);
 
+  const styles = StyleSheet.create({
+    container: {
+      flexGrow: 1,
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 32,
+      marginHorizontal: 16,
+      marginVertical: 8,
+      borderRadius: 8,
+      borderWidth: 1,
+    },
+    touchable: {
+      width: "100%",
+      height: "100%",
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: "normal",
+    },
+    subtitle: {
+      fontSize: 16,
+    },
+  });
+
   return (
-    <View className='grow flex flex-row justify-center items-center space-x-2 border mx-4 my-2 p-8 rounded-lg'>
-      <TouchableOpacity onPress={handlePress} className='w-full h-full flex flex-row justify-center items-center space-x-2'>
+    <View style={styles.container}>
+      <TouchableOpacity onPress={handlePress} style={styles.touchable}>
         <View>{icon}</View>
         <View>
-          <Text className='text-lg font-normal'>{title}</Text>
-          {subtitle && <Text>{subtitle}</Text>}
+          <Text style={styles.title}>{title}</Text>
+          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
         </View>
       </TouchableOpacity>
     </View>

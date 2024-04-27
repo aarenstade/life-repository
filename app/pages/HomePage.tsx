@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { HomePageProps, PageParams } from "../App";
 import CardButton from "../components/CardButton";
 import { Feather } from "@expo/vector-icons";
@@ -10,8 +10,18 @@ const HomePage: FC<HomePageProps> = ({ navigation }) => {
     navigation.navigate(page);
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 16,
+      width: "100%",
+    },
+  });
+
   return (
-    <View className='flex flex-col justify-center items-center space-y-4 mt-4 w-full'>
+    <View style={styles.container}>
       <CardButton icon={<Feather name='file' size={24} color='black' />} title='File System' onClick={() => navigateToPage("file_system")} />
       <CardButton icon={<Feather name='plus-circle' size={24} color='black' />} title='Add Files' onClick={() => navigateToPage("add_files")} />
       <TranscribeTextArea />
