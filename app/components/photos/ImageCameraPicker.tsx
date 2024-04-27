@@ -1,9 +1,8 @@
 import React, { FC, useState, useEffect } from "react";
-import { View, Image, StyleSheet, Alert, TouchableOpacity } from "react-native";
+import { View, Alert, TouchableOpacity, Text } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import { Feather } from "@expo/vector-icons";
-import { Paragraph } from "../base-elements/text";
 import FileGrid from "./FileGrid";
 
 interface ImageCameraPickerProps {
@@ -71,11 +70,11 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ defaultImages, onImages
     <View>
       <TouchableOpacity onPress={pickMultipleImages} className='flex flex-row justify-center items-center p-2 bg-blue-500 rounded-lg shadow-lg'>
         <Feather name='image' size={24} color='white' />
-        <Paragraph className='text-white pl-2'>Select Images</Paragraph>
+        <Text className='text-white pl-2'>Select Images</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={takePhoto} className='flex flex-row justify-center items-center p-2 bg-green-500 rounded-lg shadow-lg mt-4'>
         <Feather name='camera' size={24} color='white' />
-        <Paragraph className='text-white pl-2'>Take Photo</Paragraph>
+        <Text className='text-white pl-2'>Take Photo</Text>
       </TouchableOpacity>
       {showImages && <FileGrid files_uris={images} />}
     </View>

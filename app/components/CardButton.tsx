@@ -1,6 +1,5 @@
 import { FC, useCallback } from "react";
-import { TouchableOpacity, View, StyleSheet } from "react-native";
-import { Heading, Paragraph } from "./base-elements/text";
+import { Text, TouchableOpacity, View } from "react-native";
 
 interface CardButtonProps {
   icon: JSX.Element;
@@ -15,12 +14,12 @@ const CardButton: FC<CardButtonProps> = ({ icon, title, subtitle, onClick }) => 
   }, [onClick]);
 
   return (
-    <View className='flex flex-row justify-center items-center space-x-2 border mx-4 my-2 p-8 rounded-lg'>
+    <View className='grow flex flex-row justify-center items-center space-x-2 border mx-4 my-2 p-8 rounded-lg'>
       <TouchableOpacity onPress={handlePress} className='w-full h-full flex flex-row justify-center items-center space-x-2'>
         <View>{icon}</View>
         <View>
-          <Heading className='text-lg font-normal'>{title}</Heading>
-          {subtitle && <Paragraph>{subtitle}</Paragraph>}
+          <Text className='text-lg font-normal'>{title}</Text>
+          {subtitle && <Text>{subtitle}</Text>}
         </View>
       </TouchableOpacity>
     </View>

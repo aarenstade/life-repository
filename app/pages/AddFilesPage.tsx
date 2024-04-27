@@ -1,7 +1,6 @@
 import { FC, useState } from "react";
-import { Alert, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import ImageCameraPicker from "../components/photos/ImageCameraPicker";
-import { Heading, Paragraph } from "../components/base-elements/text";
 import { AddFilesPageProps } from "../App";
 import FileGrid from "../components/photos/FileGrid";
 
@@ -63,7 +62,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   if (step == "annotate-group") {
     view = (
       <View style={{ padding: 20 }}>
-        <Heading className='text-xl font-bold mb-4'>Group Details</Heading>
+        <Text className='text-xl font-bold mb-4'>Group Details</Text>
         <TextInput
           style={{ height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20 }}
           onChangeText={(text) => setGroupData({ ...groupData, title: text })}
@@ -97,14 +96,14 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       <View className='space-y-4'>
         {images.length > 0 && (
           <TouchableOpacity className='flex flex-row justify-center items-center p-2 bg-blue-500 rounded-lg shadow-lg' onPress={handleNextStep}>
-            <Paragraph style={{ color: "#ffffff", fontWeight: "bold", textAlign: "center" }}>Continue</Paragraph>
+            <Text style={{ color: "#ffffff", fontWeight: "bold", textAlign: "center" }}>Continue</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
           className='flex flex-row justify-center items-center p-2 bg-gray-500 rounded-lg shadow-lg'
           onPress={() => (step == "select-images" ? handleCancel() : handlePreviousStep())}
         >
-          <Paragraph style={{ color: "#ffffff", fontWeight: "bold", textAlign: "center" }}>{step == "select-images" ? "Cancel" : "Back"}</Paragraph>
+          <Text style={{ color: "#ffffff", fontWeight: "bold", textAlign: "center" }}>{step == "select-images" ? "Cancel" : "Back"}</Text>
         </TouchableOpacity>
       </View>
     </View>

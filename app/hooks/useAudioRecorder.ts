@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { Audio } from "expo-av";
 
 const useAudioRecorder = () => {

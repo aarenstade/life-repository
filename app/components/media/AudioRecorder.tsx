@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { View, Button, Alert, ActivityIndicator } from "react-native";
+import { View, Button, Alert, ActivityIndicator, Text } from "react-native";
 import useAudioRecorder from "../../hooks/useAudioRecorder";
 import { Audio } from "expo-av";
-import { Paragraph } from "../base-elements/text";
 
 interface AudioRecorderProps {
   onRecordingComplete: (blob: Blob, metadata: any) => void;
@@ -176,7 +175,7 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
             <Button title='Stop' onPress={handleStopRecording} disabled={!recording} color='red' />
             <Button title='Reset' onPress={handleReset} color='grey' />
           </View>
-          <Paragraph className='text-lg font-semibold'>{formatDuration(duration)}</Paragraph>
+          <Text className='text-lg font-semibold'>{formatDuration(duration)}</Text>
           {playbackInstance && (
             <>
               <Button title={isPlaying ? "Pause" : "Play"} onPress={handlePlayPauseToggle} />

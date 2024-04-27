@@ -100,7 +100,7 @@ const TranscribeTextArea: FC<TranscribeTextAreaProps> = ({ initialText }) => {
   };
 
   return (
-    <View className='relative w-full'>
+    <View className='grow relative w-full'>
       <TextInput
         multiline={true}
         style={{ borderWidth: 1, padding: 8, borderRadius: 4, height: 96, width: "100%" }}

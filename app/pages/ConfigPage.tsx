@@ -2,8 +2,6 @@ import React, { useState, FC } from "react";
 import { Button, TextInput, Text, View } from "react-native";
 import useConfig from "../hooks/useConfig";
 import LoadingIndicator from "../components/LoadingIndicator";
-import { Paragraph } from "../components/base-elements/text";
-import { Input } from "../components/inputs/input";
 
 interface ConfigPageProps {}
 
@@ -29,24 +27,24 @@ const ConfigPage: FC<ConfigPageProps> = () => {
   return (
     <View className='flex flex-col justify-center items-center m-4'>
       <Text className='text-xl font-bold mb-4'>API Url</Text>
-      {config.error && <Paragraph className='text-red-500 text-center'>{config.error}</Paragraph>}
-      {config.connected && config.data && <Paragraph className='text-green-500 text-center text-xs'>Successfully Connected</Paragraph>}
+      {config.error && <Text className='text-red-500 text-center'>{config.error}</Text>}
+      {config.connected && config.data && <Text className='text-green-500 text-center text-xs'>Successfully Connected</Text>}
       <View style={{ width: "80%", alignItems: "center" }}>
         {!config.api_url ? (
           <>
-            <Input placeholder='Set API URL' value={newApiUrl} onChangeText={setNewApiUrl} autoCapitalize='none' className='mt-4 mb-2 w-full' />
+            <TextInput placeholder='Set API URL' value={newApiUrl} onChangeText={setNewApiUrl} autoCapitalize='none' className='mt-4 mb-2 w-full' />
             <Button onPress={() => testConnection()} title='Save' />
           </>
         ) : (
           <>
             {!isEditing ? (
               <>
-                <Paragraph style={{ marginVertical: 8 }}>{config.api_url}</Paragraph>
+                <Text style={{ marginVertical: 8 }}>{config.api_url}</Text>
                 <Button onPress={() => setIsEditing(true)} title='Edit' />
               </>
             ) : (
               <>
-                <Input value={newApiUrl} onChangeText={setNewApiUrl} autoCapitalize='none' className='mt-4 mb-2 w-full' />
+                <TextInput value={newApiUrl} onChangeText={setNewApiUrl} autoCapitalize='none' className='mt-4 mb-2 w-full' />
                 <Button onPress={() => testConnection()} title='Save' />
               </>
             )}
