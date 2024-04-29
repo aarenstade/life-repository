@@ -37,17 +37,26 @@ const fetchAPI = async (url: string, endpointName: string, params?: any, method:
     }
 
     const res = await fetch(endpoint, options);
+
+    let data: any;
+
     if (res.status === 200) {
       if (dataType === "blob") {
-        const data = await res.blob();
+        data = await res.blob();
         return { success: true, data, code: res.status };
       }
 
-      const data = await res.json();
+      data = await res.json();
       return { success: true, data, code: res.status };
     }
 
-    return { success: false, code: res.status };
+    try {
+      data = (await res.json()) || (await res.text());
+    } catch (error) {
+      data = null;
+    }
+
+    return { success: false, code: res.status, data };
   } catch (error) {
     console.error(`fetch error: ${JSON.stringify(error)}`);
     return { success: false, message: error, code: 500 };

@@ -13,6 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.file_io import router as file_io_router
 from routers.transcribe import router as transcribe_router
 
+from config import load_config
+
 app = FastAPI()
 
 environment = os.getenv("ENVIRONMENT", "dev")  # Default to 'development' if not set
@@ -31,9 +33,7 @@ if environment == "dev":
 
 @app.get("/config")
 async def get_config():
-    with open("config.json", "r") as file:
-        data = json.load(file)
-    return data
+    return load_config()
 
 
 app.include_router(file_io_router, prefix="/paths")

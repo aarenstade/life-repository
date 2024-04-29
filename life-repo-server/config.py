@@ -1,11 +1,19 @@
+import json
 import os
 
-TMP_DIR = os.path.join(
-    os.path.expanduser("~"), "life-repository", "data", "tmp"
-)  # TODO get from global config
-DATA_DIR = os.path.join(
-    os.path.expanduser("~"), "life-repository", "data"
-)  # TODO get from global config
+ROOT_PATH = os.path.join(os.path.expanduser("~"), "life-repository")
+CONFIG_PATH = os.path.join(ROOT_PATH, "config.json")
+TMP_DIR = os.path.join(ROOT_PATH, "data", "tmp")  # TODO get from global config
+DATA_DIR = os.path.join(ROOT_PATH, "data")  # TODO get from global config
+
+
+def load_config():
+    if not os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH, "w") as file:
+            json.dump({}, file)
+    with open(CONFIG_PATH, "r") as file:
+        return json.load(file)
+
 
 os.makedirs(TMP_DIR, exist_ok=True)
 os.makedirs(DATA_DIR, exist_ok=True)

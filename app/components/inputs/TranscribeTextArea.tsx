@@ -68,7 +68,7 @@ const RecordIcon: FC<RecordIconProps> = ({ onTranscriptionComplete }) => {
   return (
     <View>
       {isLoading ? (
-        <Feather name='loader' size={24} style={styles.iconLoading} />
+        <Feather name='loader' size={24} />
       ) : recording && !isPaused ? (
         <TouchableOpacity onPress={handleRecord}>
           <Feather name='mic' size={24} color={"red"} />
@@ -97,35 +97,36 @@ const TranscribeTextArea: FC<TranscribeTextAreaProps> = ({ initialText }) => {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      position: "relative",
+      width: "100%",
+    },
+    textArea: {
+      width: "100%",
+      minHeight: 150,
+      padding: 10,
+      paddingTop: 10,
+      paddingBottom: 50, // Make space for the record button
+      borderColor: "gray",
+      borderWidth: 1,
+      borderRadius: 5,
+    },
+    recordButton: {
+      position: "absolute",
+      right: 10,
+      bottom: 10,
+    },
+  });
+
   return (
     <View style={styles.container}>
-      <TextInput multiline={true} style={styles.textInput} value={value} onChangeText={setValue} />
-      <View style={styles.recordIcon}>
+      <TextInput multiline value={value} onChangeText={setValue} placeholder='Start transcribing...' style={styles.textArea} />
+      <View style={styles.recordButton}>
         <RecordIcon onTranscriptionComplete={handleNewTranscriptText} />
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    position: "relative",
-    width: "100%",
-  },
-  textInput: {
-    borderWidth: 1,
-    padding: 8,
-    borderRadius: 4,
-    height: 96,
-    width: "100%",
-  },
-  recordIcon: {
-    position: "absolute",
-    bottom: 8,
-    right: 8,
-  },
-  iconLoading: {},
-});
 
 export default TranscribeTextArea;
