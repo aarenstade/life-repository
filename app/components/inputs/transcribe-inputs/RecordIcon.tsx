@@ -18,9 +18,20 @@ const RecordIcon: FC<RecordIconProps> = ({ onTranscriptionComplete }) => {
       setIsLoading(true);
       await stopRecording();
       const uri = getRecordingUri();
-      const transcription = await transcribeRecording(uri);
-      onTranscriptionComplete(transcription || "");
-      setIsLoading(false);
+      try {
+        const transcriptionResult = await transcribeRecording(uri);
+        if (typeof transcriptionResult === "string") {
+          onTranscriptionComplete(transcriptionResult);
+        } else {
+          console.error("Transcription error:", transcriptionResult.message);
+          onTranscriptionComplete("");
+        }
+      } catch (error) {
+        console.error("Error transcribing recording:", error);
+        onTranscriptionComplete("");
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       await startRecording();
     }
@@ -29,14 +40,14 @@ const RecordIcon: FC<RecordIconProps> = ({ onTranscriptionComplete }) => {
   return (
     <View>
       {isLoading ? (
-        <Feather name='loader' size={18} />
+        <Feather name='loader' size={20} />
       ) : recording && !isPaused ? (
         <TouchableOpacity onPress={handleRecord}>
-          <Feather name='mic' size={18} color={"red"} />
+          <Feather name='mic' size={20} color={"red"} />
         </TouchableOpacity>
       ) : (
         <TouchableOpacity onPress={handleRecord}>
-          <Feather name='mic' size={18} color='blue' />
+          <Feather name='mic' size={20} color='blue' />
         </TouchableOpacity>
       )}
     </View>
