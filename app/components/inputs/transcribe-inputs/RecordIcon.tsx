@@ -29,14 +29,14 @@ const RecordIcon: FC<RecordIconProps> = ({ onTranscriptionComplete }) => {
   return (
     <View>
       {isLoading ? (
-        <Feather name='loader' size={24} />
+        <Feather name='loader' size={18} />
       ) : recording && !isPaused ? (
         <TouchableOpacity onPress={handleRecord}>
-          <Feather name='mic' size={24} color={"red"} />
+          <Feather name='mic' size={18} color={"red"} />
         </TouchableOpacity>
       ) : (
         <TouchableOpacity onPress={handleRecord}>
-          <Feather name='mic' size={24} color='blue' />
+          <Feather name='mic' size={18} color='blue' />
         </TouchableOpacity>
       )}
     </View>
