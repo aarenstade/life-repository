@@ -1,14 +1,16 @@
 import { FC, useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TextInput } from "react-native";
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
 import FilePreviewGrid from "../../components/media/FilePreviewGrid";
 import MultiStepChinView from "../../components/control/MultiStepChinView";
 import FileDisplay from "../../components/media/FileDisplay";
 import { IndividualFileAnnotation } from "../../types/annotation";
+import _, { initial } from "lodash";
 
 interface FileAnnotationViewProps {
   file_uris: string[];
   hideFilePreviewGrid?: boolean;
+  initialData?: any;
   onDataChange: (data: any) => void;
   onFileUrisChange: (file_uris: string[]) => void;
   onPreviousStep: () => void;
@@ -19,15 +21,20 @@ const FileGroupAnnotationView: FC<FileAnnotationViewProps> = ({
   file_uris,
   onFileUrisChange,
   hideFilePreviewGrid,
+  initialData,
   onDataChange,
   onNextStep,
   onPreviousStep,
 }) => {
-  const [groupData, setGroupData] = useState({
-    title: "",
-    description: "",
-    tags: [],
-  });
+  const [groupData, setGroupData] = useState(
+    initialData
+      ? initialData
+      : {
+          title: "",
+          description: "",
+          tags: [],
+        }
+  );
 
   useEffect(() => {
     onDataChange(groupData);
@@ -37,19 +44,19 @@ const FileGroupAnnotationView: FC<FileAnnotationViewProps> = ({
     <View style={groupViewStyles.annotateGroupContainer}>
       <Text style={groupViewStyles.groupDetailsText}>Group Details</Text>
       <TranscribeTextInput
-        initialText={groupData.title}
-        onChangeText={(text) => setGroupData({ ...groupData, title: text })}
+        value={groupData.title}
+        onChangeText={(text) => setGroupData((prev) => ({ ...prev, title: text }))}
         placeholder='Enter title'
       />
       <TranscribeTextInput
-        initialText={groupData.description}
-        onChangeText={(text) => setGroupData({ ...groupData, description: text })}
+        value={groupData.description}
+        onChangeText={(text) => setGroupData((prev) => ({ ...prev, description: text }))}
         multiline
         placeholder='Enter description'
       />
       <TranscribeTextInput
-        initialText={groupData.tags.join(",")}
-        onChangeText={(text) => setGroupData({ ...groupData, tags: text.split(",") })}
+        value={groupData.tags.join(",")}
+        onChangeText={(text) => setGroupData((prev) => ({ ...prev, tags: text.split(",") }))}
         placeholder='Enter tags, separated by commas'
       />
       {!hideFilePreviewGrid && (
@@ -61,41 +68,55 @@ const FileGroupAnnotationView: FC<FileAnnotationViewProps> = ({
   );
 };
 
-const FileIndividualAnnotationView: FC<FileAnnotationViewProps> = ({ file_uris, onFileUrisChange, onNextStep, onPreviousStep }) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [data, setData] = useState<IndividualFileAnnotation[]>(Array(file_uris.length).fill({ description: "" }));
+const FileIndividualAnnotationView: FC<FileAnnotationViewProps> = ({
+  file_uris,
+  onFileUrisChange,
+  initialData,
+  onDataChange,
+  onNextStep,
+  onPreviousStep,
+}) => {
+  const [currentFileUri, setCurrentFileUri] = useState<string>(file_uris[0]);
+  const [data, setData] = useState<Record<string, IndividualFileAnnotation>>(
+    !_.isEmpty(initialData) ? initialData : file_uris.reduce((acc, uri) => ({ ...acc, [uri]: { description: "" } }), {})
+  );
+
+  useEffect(() => {
+    onDataChange(data);
+  }, [data]);
 
   const navigateToNextStep = () => {
-    if (currentStep < file_uris.length - 1) {
-      setCurrentStep(currentStep + 1);
+    const currentIndex = file_uris.indexOf(currentFileUri);
+    if (currentIndex < file_uris.length - 1) {
+      setCurrentFileUri(file_uris[currentIndex + 1]);
     } else {
       onNextStep();
     }
   };
 
   const navigateToPreviousStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+    const currentIndex = file_uris.indexOf(currentFileUri);
+    if (currentIndex > 0) {
+      setCurrentFileUri(file_uris[currentIndex - 1]);
     } else {
       onPreviousStep();
     }
   };
 
   const updateFileDescription = (text: string) => {
-    const updatedData = data.map((item, index) => (index === currentStep ? { ...item, description: text } : item));
-    setData(updatedData);
+    setData({ ...data, [currentFileUri]: { ...data[currentFileUri], description: text } });
   };
 
   return (
     <View style={individualViewStyles.annotateIndividualContainer}>
       <Text style={{ textAlign: "center", fontSize: 12, padding: 10 }}>
-        {currentStep + 1} of {file_uris.length}
+        {file_uris.indexOf(currentFileUri) + 1} of {file_uris.length}
       </Text>
       <ScrollView style={{ width: "100%", height: "100%" }}>
-        <View style={{ marginBottom: 20, minHeight: 250 }}>
-          <FileDisplay file_uri={file_uris[currentStep]} />
+        <View style={{ marginBottom: 20, minHeight: 150 }}>
+          <FileDisplay file_uri={currentFileUri} />
         </View>
-        <TranscribeTextInput multiline value={data[currentStep].description} onChangeText={(text) => updateFileDescription(text)} />
+        <TranscribeTextInput multiline value={data[currentFileUri]?.description || ""} onChangeText={updateFileDescription} />
       </ScrollView>
       <View style={{ width: "100%", height: "10%", display: "flex", justifyContent: "flex-end", overflow: "hidden" }}>
         <MultiStepChinView onContinue={navigateToNextStep} onCancel={null} onBack={navigateToPreviousStep} />
