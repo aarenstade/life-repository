@@ -13,7 +13,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   const [step, setStep] = useState("select-files");
   const [file_uris, setFileUris] = useState<string[]>([]);
 
-  const [individualData, setIndividualData] = useState<IndividualFileAnnotation[]>([]);
+  const [individualData, setIndividualData] = useState<Record<string, IndividualFileAnnotation>>({});
   const [groupData, setGroupData] = useState<GroupFileAnnotation>({
     title: "",
     description: "",
@@ -69,6 +69,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       <FileGroupAnnotationView
         file_uris={file_uris}
         onFileUrisChange={setFileUris}
+        initialData={groupData}
         onDataChange={setGroupData}
         onPreviousStep={handlePreviousStep}
         onNextStep={handleNextStep}
@@ -82,6 +83,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       <FileIndividualAnnotationView
         file_uris={file_uris}
         onFileUrisChange={setFileUris}
+        initialData={individualData}
         onDataChange={setIndividualData}
         onPreviousStep={handlePreviousStep}
         onNextStep={handleNextStep}
