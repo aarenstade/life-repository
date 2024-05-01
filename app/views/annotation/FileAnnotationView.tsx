@@ -1,23 +1,37 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
 import FilePreviewGrid from "../../components/media/FilePreviewGrid";
 import MultiStepChinView from "../../components/control/MultiStepChinView";
+import FileDisplay from "../../components/media/FileDisplay";
+import { IndividualFileAnnotation } from "../../types/annotation";
 
 interface FileAnnotationViewProps {
   file_uris: string[];
   hideFilePreviewGrid?: boolean;
+  onDataChange: (data: any) => void;
   onFileUrisChange: (file_uris: string[]) => void;
   onPreviousStep: () => void;
   onNextStep: () => void;
 }
 
-const FileGroupAnnotationView: FC<FileAnnotationViewProps> = ({ file_uris, onFileUrisChange, hideFilePreviewGrid, onNextStep, onPreviousStep }) => {
+const FileGroupAnnotationView: FC<FileAnnotationViewProps> = ({
+  file_uris,
+  onFileUrisChange,
+  hideFilePreviewGrid,
+  onDataChange,
+  onNextStep,
+  onPreviousStep,
+}) => {
   const [groupData, setGroupData] = useState({
     title: "",
     description: "",
     tags: [],
   });
+
+  useEffect(() => {
+    onDataChange(groupData);
+  }, [groupData]);
 
   return (
     <View style={groupViewStyles.annotateGroupContainer}>
@@ -38,7 +52,7 @@ const FileGroupAnnotationView: FC<FileAnnotationViewProps> = ({ file_uris, onFil
         onChangeText={(text) => setGroupData({ ...groupData, tags: text.split(",") })}
         placeholder='Enter tags, separated by commas'
       />
-      {hideFilePreviewGrid && (
+      {!hideFilePreviewGrid && (
         <ScrollView style={groupViewStyles.scollViewContainer}>
           <FilePreviewGrid files_uris={file_uris} onFileUrisChange={onFileUrisChange} />
         </ScrollView>
@@ -48,18 +62,18 @@ const FileGroupAnnotationView: FC<FileAnnotationViewProps> = ({ file_uris, onFil
 };
 
 const FileIndividualAnnotationView: FC<FileAnnotationViewProps> = ({ file_uris, onFileUrisChange, onNextStep, onPreviousStep }) => {
-  const [steps, setSteps] = useState(Array.from({ length: file_uris.length }, (_, i) => i));
   const [currentStep, setCurrentStep] = useState(0);
+  const [data, setData] = useState<IndividualFileAnnotation[]>(Array(file_uris.length).fill({ description: "" }));
 
-  const handleNextStep = () => {
-    if (currentStep < steps.length - 1) {
+  const navigateToNextStep = () => {
+    if (currentStep < file_uris.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       onNextStep();
     }
   };
 
-  const handleBackStep = () => {
+  const navigateToPreviousStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     } else {
@@ -67,12 +81,25 @@ const FileIndividualAnnotationView: FC<FileAnnotationViewProps> = ({ file_uris, 
     }
   };
 
+  const updateFileDescription = (text: string) => {
+    const updatedData = data.map((item, index) => (index === currentStep ? { ...item, description: text } : item));
+    setData(updatedData);
+  };
+
   return (
     <View style={individualViewStyles.annotateIndividualContainer}>
-      <Text>
-        {currentStep + 1} of {steps.length}
+      <Text style={{ textAlign: "center", fontSize: 12, padding: 10 }}>
+        {currentStep + 1} of {file_uris.length}
       </Text>
-      <MultiStepChinView onContinue={handleNextStep} onCancel={null} onBack={handleBackStep} />
+      <ScrollView style={{ width: "100%", height: "100%" }}>
+        <View style={{ marginBottom: 20, minHeight: 250 }}>
+          <FileDisplay file_uri={file_uris[currentStep]} />
+        </View>
+        <TranscribeTextInput multiline value={data[currentStep].description} onChangeText={(text) => updateFileDescription(text)} />
+      </ScrollView>
+      <View style={{ width: "100%", height: "10%", display: "flex", justifyContent: "flex-end", overflow: "hidden" }}>
+        <MultiStepChinView onContinue={navigateToNextStep} onCancel={null} onBack={navigateToPreviousStep} />
+      </View>
     </View>
   );
 };
@@ -117,12 +144,18 @@ const individualViewStyles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     height: "100%",
-    padding: 20,
+    width: "100%",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
 
   individualDetailsText: {
     fontSize: 20,
     fontWeight: "bold",
+  },
+
+  fileDisplayContainer: {
+    width: "100%",
   },
 });
 
