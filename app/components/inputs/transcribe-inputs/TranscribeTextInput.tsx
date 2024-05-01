@@ -9,13 +9,11 @@ interface TranscribeTextInputProps {
 }
 
 const TranscribeTextInput: FC<TranscribeTextInputProps> = ({ initialText, ...rest }) => {
-  const [value, setValue] = useState(initialText || "");
-
   const handleNewTranscriptText = (transcript: string) => {
-    if (value) {
-      setValue(value + "\n" + transcript);
+    if (rest.value) {
+      if (rest.onChangeText) rest.onChangeText(rest.value + "\n" + transcript);
     } else {
-      setValue(transcript);
+      if (rest.onChangeText) rest.onChangeText(transcript);
     }
   };
 
@@ -44,7 +42,7 @@ const TranscribeTextInput: FC<TranscribeTextInputProps> = ({ initialText, ...res
 
   return (
     <View style={styles.container}>
-      <TextInput value={value} onChangeText={setValue} placeholder='Write something here...' style={styles.input} {...rest} />
+      <TextInput value={rest.value || ""} onChangeText={rest.onChangeText} placeholder='Write something here...' style={styles.input} {...rest} />
       <View style={styles.recordButton}>
         <RecordIcon onTranscriptionComplete={handleNewTranscriptText} />
       </View>
