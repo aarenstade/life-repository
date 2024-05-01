@@ -4,6 +4,59 @@ import ImageCameraPicker from "../components/photos/ImageCameraPicker";
 import { AddFilesPageProps } from "../App";
 import FileGrid from "../components/photos/FileGrid";
 
+interface ChinViewProps {
+  onContinue: () => void;
+  onCancel: () => void;
+  onBack?: () => void;
+}
+
+const ChinView: FC<ChinViewProps> = ({ onContinue, onCancel, onBack }) => {
+  return (
+    <View style={chinViewStyles.chinViewContainer}>
+      <TouchableOpacity onPress={onCancel} style={[chinViewStyles.chinViewButton, chinViewStyles.cancelButton]}>
+        <Text style={chinViewStyles.chinViewButtonText}>Cancel</Text>
+      </TouchableOpacity>
+      {onBack && (
+        <TouchableOpacity onPress={onBack} style={[chinViewStyles.chinViewButton, chinViewStyles.normalButton]}>
+          <Text style={chinViewStyles.chinViewButtonText}>Back</Text>
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity onPress={onContinue} style={[chinViewStyles.chinViewButton, chinViewStyles.normalButton]}>
+        <Text style={chinViewStyles.chinViewButtonText}>Continue</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const chinViewStyles = StyleSheet.create({
+  chinViewContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 10,
+  },
+  chinViewButton: {
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginHorizontal: 10,
+  },
+  cancelButton: {
+    backgroundColor: "#A4A4A4", // Gray
+  },
+  backButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#007AFF", // Blue outline
+  },
+  normalButton: {
+    backgroundColor: "#007AFF", // Blue
+  },
+  chinViewButtonText: {
+    color: "white",
+    textAlign: "center",
+  },
+});
+
 const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   const [step, setStep] = useState("select-images");
   const [images, setImages] = useState<string[]>([]);
@@ -77,7 +130,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   if (step === "select-images") {
     view = (
       <View style={styles.selectImagesContainer}>
-        <ImageCameraPicker defaultImages={images} onImagesChanged={setImages} />
+        <ImageCameraPicker images={images} onImagesChanged={setImages} />
       </View>
     );
   }
@@ -130,9 +183,6 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       alignItems: "center",
       padding: 8,
       borderRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
       elevation: 4,
     },
     continueButton: {
@@ -150,21 +200,11 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   return (
     <View style={mainStyles.container}>
-      {view}
-      <ScrollView>{images && <FileGrid files_uris={images} />}</ScrollView>
-      <View style={mainStyles.buttonContainer}>
-        {images.length > 0 && (
-          <TouchableOpacity style={[mainStyles.button, mainStyles.continueButton]} onPress={handleNextStep}>
-            <Text style={mainStyles.buttonText}>Continue</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={[mainStyles.button, mainStyles.cancelButton]}
-          onPress={() => (step == "select-images" ? handleCancel() : handlePreviousStep())}
-        >
-          <Text style={mainStyles.buttonText}>{step == "select-images" ? "Cancel" : "Back"}</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView>
+        {view}
+        {images && <FileGrid files_uris={images} onFileUrisChange={setImages} />}
+      </ScrollView>
+      <ChinView onContinue={handleNextStep} onCancel={handleCancel} onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined} />
     </View>
   );
 };
