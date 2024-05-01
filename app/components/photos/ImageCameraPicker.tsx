@@ -6,18 +6,12 @@ import { Feather } from "@expo/vector-icons";
 import FileGrid from "./FileGrid";
 
 interface ImageCameraPickerProps {
-  defaultImages: string[];
+  images: string[];
   onImagesChanged: (images: string[]) => void;
   showImages?: boolean;
 }
 
-const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ defaultImages, onImagesChanged, showImages = false }) => {
-  const [images, setImages] = useState<string[]>(defaultImages);
-
-  useEffect(() => {
-    onImagesChanged(images);
-  }, [images]);
-
+const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged, showImages = false }) => {
   const requestCameraPermissions = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -49,7 +43,7 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ defaultImages, onImages
     if (!result.canceled && result.assets) {
       const newImages = result.assets.map((img) => img.uri);
       const allImages = Array.from(new Set([...images, ...newImages]));
-      setImages(allImages);
+      onImagesChanged(allImages);
     }
   };
 
@@ -62,7 +56,7 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ defaultImages, onImages
     });
 
     if (!result.canceled && result.assets) {
-      setImages([...images, ...result.assets.map((img) => img.uri)]);
+      onImagesChanged([...images, ...result.assets.map((img) => img.uri)]);
     }
   };
 
@@ -73,9 +67,6 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ defaultImages, onImages
       alignItems: "center",
       padding: 10,
       borderRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
       elevation: 5,
     },
     selectButton: {
