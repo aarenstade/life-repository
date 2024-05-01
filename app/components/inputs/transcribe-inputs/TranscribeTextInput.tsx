@@ -44,7 +44,7 @@ const TranscribeTextInput: FC<TranscribeTextInputProps> = ({ initialText, ...res
 
   return (
     <View style={styles.container}>
-      <TextInput value={value} onChangeText={setValue} placeholder='Start transcribing...' style={styles.input} {...rest} />
+      <TextInput value={value} onChangeText={setValue} placeholder='Write something here...' style={styles.input} {...rest} />
       <View style={styles.recordButton}>
         <RecordIcon onTranscriptionComplete={handleNewTranscriptText} />
       </View>
