@@ -2,9 +2,10 @@ import { FC, useEffect, useState } from "react";
 import { Alert, ScrollView, View, StyleSheet } from "react-native";
 import { AddFilesPageProps } from "../App";
 import FilePreviewGrid from "../components/media/FilePreviewGrid";
-import { FileGroupAnnotationView, FileIndividualAnnotationView } from "../views/annotation/FileAnnotationView";
 import MultiStepChinView from "../components/control/MultiStepChinView";
 import SelectImagesView from "../views/selection/SelectImagesView";
+import AnnotationViewFileGroup from "../views/annotation/AnnotationViewFileGroup";
+import AnnotationViewIndividualFile from "../views/annotation/AnnotationViewIndividualFile";
 import { GroupFileAnnotation, IndividualFileAnnotation } from "../types/annotation";
 
 const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
@@ -66,7 +67,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   if (step == "annotate-group") {
     view = (
-      <FileGroupAnnotationView
+      <AnnotationViewFileGroup
         file_uris={file_uris}
         onFileUrisChange={setFileUris}
         initialData={groupData}
@@ -80,7 +81,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   if (step == "annotate-individual") {
     return (
-      <FileIndividualAnnotationView
+      <AnnotationViewIndividualFile
         file_uris={file_uris}
         onFileUrisChange={setFileUris}
         initialData={individualData}
