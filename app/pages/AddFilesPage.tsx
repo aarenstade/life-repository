@@ -1,22 +1,29 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { Alert, ScrollView, View, StyleSheet } from "react-native";
 import { AddFilesPageProps } from "../App";
 import FilePreviewGrid from "../components/media/FilePreviewGrid";
 import { FileGroupAnnotationView, FileIndividualAnnotationView } from "../views/annotation/FileAnnotationView";
 import MultiStepChinView from "../components/control/MultiStepChinView";
 import SelectImagesView from "../views/selection/SelectImagesView";
+import { GroupFileAnnotation, IndividualFileAnnotation } from "../types/annotation";
 
 const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
+  const steps = ["select-files", "annotate-group", "annotate-individual"];
+
   const [step, setStep] = useState("select-files");
   const [file_uris, setFileUris] = useState<string[]>([]);
 
-  const steps = ["select-files", "annotate-group", "annotate-individual"];
-
-  const [groupData, setGroupData] = useState({
+  const [individualData, setIndividualData] = useState<IndividualFileAnnotation[]>([]);
+  const [groupData, setGroupData] = useState<GroupFileAnnotation>({
     title: "",
     description: "",
     tags: [],
+    file_uris: [],
   });
+
+  useEffect(() => {
+    setGroupData((prev) => ({ ...prev, file_uris }));
+  }, [file_uris]);
 
   const handleNextStep = () => {
     const currentStepIndex = steps.indexOf(step);
@@ -62,6 +69,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       <FileGroupAnnotationView
         file_uris={file_uris}
         onFileUrisChange={setFileUris}
+        onDataChange={setGroupData}
         onPreviousStep={handlePreviousStep}
         onNextStep={handleNextStep}
         hideFilePreviewGrid
@@ -74,6 +82,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       <FileIndividualAnnotationView
         file_uris={file_uris}
         onFileUrisChange={setFileUris}
+        onDataChange={setIndividualData}
         onPreviousStep={handlePreviousStep}
         onNextStep={handleNextStep}
       />
