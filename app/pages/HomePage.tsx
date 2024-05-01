@@ -3,7 +3,6 @@ import { StyleSheet, View } from "react-native";
 import { HomePageProps, PageParams } from "../App";
 import CardButton from "../components/CardButton";
 import { Feather } from "@expo/vector-icons";
-import TranscribeTextArea from "../components/inputs/TranscribeTextArea";
 
 const HomePage: FC<HomePageProps> = ({ navigation }) => {
   const navigateToPage = (page: keyof PageParams) => {
