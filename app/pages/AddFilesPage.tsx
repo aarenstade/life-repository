@@ -3,6 +3,7 @@ import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet 
 import ImageCameraPicker from "../components/photos/ImageCameraPicker";
 import { AddFilesPageProps } from "../App";
 import FileGrid from "../components/photos/FileGrid";
+import TranscribeTextInput from "../components/inputs/transcribe-inputs/TranscribeTextInput";
 
 interface ChinViewProps {
   onContinue: () => void;
@@ -109,7 +110,10 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       justifyContent: "space-between",
     },
     annotateGroupContainer: {
+      display: "flex",
+      flexDirection: "column",
       padding: 20,
+      gap: 20,
     },
     groupDetailsText: {
       fontSize: 20,
@@ -139,22 +143,20 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     view = (
       <View style={styles.annotateGroupContainer}>
         <Text style={styles.groupDetailsText}>Group Details</Text>
-        <TextInput
-          style={styles.input}
+        <TranscribeTextInput
+          initialText={groupData.title}
           onChangeText={(text) => setGroupData({ ...groupData, title: text })}
-          value={groupData.title}
           placeholder='Enter title'
         />
-        <TextInput
-          style={[styles.input, styles.inputMargin]}
+        <TranscribeTextInput
+          initialText={groupData.description}
           onChangeText={(text) => setGroupData({ ...groupData, description: text })}
-          value={groupData.description}
+          multiline
           placeholder='Enter description'
         />
-        <TextInput
-          style={styles.input}
+        <TranscribeTextInput
+          initialText={groupData.tags.join(",")}
           onChangeText={(text) => setGroupData({ ...groupData, tags: text.split(",") })}
-          value={groupData.tags.join(",")}
           placeholder='Enter tags, separated by commas'
         />
       </View>
