@@ -5,20 +5,22 @@
 
 This is a system for building a centralized and searchable archive of all the documents in my life. For all the images, videos, notebooks, sketchbooks, all the way to tax documents, and more.
 
-Overall, there are a few sub-goals:
-1. Digitize my physical documents, notebooks, drawings, etc.
-2. Quickly annotate and tag files with a mobile app.
-3. Upload and store all files w/ metadata in a central location (NAS server).
-4. Use different methods to search across all my files.
+I basically want to:
+- Start the process of building a centralized "life archive"
+- Do data experiments, LLM experiments, and build a search engine.
+
+Here's what I'm trying to build:
+1. App to easily capture and annotate all my physical documents (notebooks, sketchbooks, etc).
+2. App functionality for annotating existing files remotely (eg. files on a NAS server).
+3. Build and experiment with different methods to search across all my files.
     - Basic SQL filter queries.
     - Fuzzy searching tags.
     - Similarity search on natural language queries.
     - Chat using an LLM chat agent
-5. Experimenting with various data science methods.
+4. Various data science experiments.
     - Clustering and grouping.
     - Quantifying interesting things.
-
-I basically want a NAS storage system for all my data, with integrated AI, that I can experiment with.
+    - Constructing a semantic graph.
 
 ## Outline of the System
 
@@ -49,14 +51,11 @@ Does a few different things:
 
 ### Data Extraction
 
-Categories to label things:
-- File category (eg. image, video, text, document, etc.)
-- File type (eg. jpg, png, heic, mp4, pdf, etc.)
-- Origin medium (eg. physical, digital)
-- Groups (arbitrary groups to put file into, exiting or new)
-- Tags (list of tags to attach to file)
+Things we want to capture about each file:
+- File type (eg. image, video, text, document, etc.)
+- File extension (eg. jpg, png, heic, mp4, pdf, etc.)
+- Tags (groups, people, attributes, etc)
 - Manual content description
 - Generated content description
-
 
 
