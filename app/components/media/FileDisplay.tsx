@@ -1,5 +1,5 @@
-import React, { FC, useEffect, useState } from "react";
-import { View, Image, Text } from "react-native";
+import React, { CSSProperties, FC, useEffect, useState } from "react";
+import { View, Image, Text, StyleProp, ImageStyle } from "react-native";
 // import { WebView } from 'react-native-webview';
 // import Video from 'react-native-video';
 import * as FileSystem from "expo-file-system";
@@ -20,7 +20,10 @@ const FileDisplay: FC<FileDisplayProps> = ({ file_uri }) => {
       case "jpeg":
       case "png":
       case "gif":
-        setFileContent(<Image source={{ uri: file_uri }} style={{ width: "100%", height: "100%" }} resizeMode='contain' />);
+        Image.getSize(file_uri, (width, height) => {
+          const style: StyleProp<ImageStyle> = { width: "100%", flexGrow: 1 };
+          setFileContent(<Image source={{ uri: file_uri }} style={style} resizeMode='contain' />);
+        });
         break;
       //   case 'mp4':
       //   case 'mov':
