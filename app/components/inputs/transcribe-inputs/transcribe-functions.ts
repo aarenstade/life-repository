@@ -1,12 +1,14 @@
 import useConfigStore from "../../../state/config";
 
-export const transcribeRecording = async (uri: string): Promise<string | null> => {
-  if (!uri) return "";
+import { IErrorResponse } from "../../../types/error";
+
+export const transcribeRecording = async (uri: string): Promise<string | IErrorResponse> => {
+  if (!uri) return { status: "error", message: "No URI provided" };
 
   const api_url = useConfigStore.getState().api_url;
 
   if (!api_url) {
-    throw new Error("No API URL provided");
+    return { status: "error", message: "No API URL provided" };
   }
 
   let apiUrl = new URL("transcribe/audio", api_url);
@@ -30,16 +32,20 @@ export const transcribeRecording = async (uri: string): Promise<string | null> =
     },
   };
 
-  const response = await fetch(apiUrl, options);
+  try {
+    const response = await fetch(apiUrl.toString(), options);
 
-  if (!response.ok) {
-    throw new Error("Failed to transcribe audio");
-  }
+    if (!response.ok) {
+      return { status: "error", message: "Failed to transcribe audio" };
+    }
 
-  const data = await response.json();
-  if ("text" in data) {
-    return data["text"];
-  } else {
-    throw new Error("Failed to transcribe audio");
+    const data = await response.json();
+    if ("text" in data) {
+      return data["text"];
+    } else {
+      return { status: "error", message: "Failed to transcribe audio" };
+    }
+  } catch (error) {
+    return { status: "error", message: "An error occurred during transcription" };
   }
 };
