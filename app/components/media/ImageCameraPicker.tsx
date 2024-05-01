@@ -3,7 +3,7 @@ import { View, Alert, TouchableOpacity, Text, StyleSheet } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import { Feather } from "@expo/vector-icons";
-import FileGrid from "./FileGrid";
+import FileGrid from "./FilePreviewGrid";
 
 interface ImageCameraPickerProps {
   images: string[];

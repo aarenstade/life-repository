@@ -2,7 +2,7 @@ import React, { FC } from "react";
 import { View, Image, Text, TouchableOpacity, Alert } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
-interface FileGridProps {
+interface FilePreviewGridProps {
   files_uris: string[];
   onFileUrisChange?: (newUris: string[]) => void;
   onFileClick?: (uri: string) => void;
@@ -69,7 +69,7 @@ const FileIcon: FC<{ uri: string; onDelete?: () => void; onClick?: () => void }>
   }
 };
 
-const FileGrid: FC<FileGridProps> = ({ files_uris, onFileUrisChange, onFileClick }) => {
+const FilePreviewGrid: FC<FilePreviewGridProps> = ({ files_uris, onFileUrisChange, onFileClick }) => {
   const handleDelete = (uri: string) => {
     Alert.alert(
       "Confirm Delete",
@@ -102,4 +102,4 @@ const FileGrid: FC<FileGridProps> = ({ files_uris, onFileUrisChange, onFileClick
   );
 };
 
-export default FileGrid;
+export default FilePreviewGrid;
