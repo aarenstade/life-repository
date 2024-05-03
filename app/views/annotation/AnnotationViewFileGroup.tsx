@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
 import FilePreviewGrid from "../../components/media/FilePreviewGrid";
 import _ from "lodash";
+import TagAnnotationInput from "../../components/inputs/transcribe-inputs/TagAnnotationInput";
 
 export interface AnnotationViewProps {
   file_uris: string[];
@@ -52,11 +53,7 @@ const AnnotationViewFileGroup: FC<AnnotationViewProps> = ({
         multiline
         noFullScreen
       />
-      <TranscribeTextInput
-        value={groupData.tags.join(",")}
-        onChangeText={(text) => setGroupData((prev) => ({ ...prev, tags: text.split(",") }))}
-        placeholder='Enter tags, separated by commas'
-      />
+      <TagAnnotationInput tags={groupData.tags} onTagsChange={(newTags) => setGroupData((prev) => ({ ...prev, tags: newTags }))} />
       {!hideFilePreviewGrid && (
         <ScrollView style={groupViewStyles.scollViewContainer}>
           <FilePreviewGrid files_uris={file_uris} onFileUrisChange={onFileUrisChange} />
