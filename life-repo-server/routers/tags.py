@@ -15,7 +15,7 @@ async def get_tag_annotations(request: Request, search: str):
             {"search_tag": f"%{search}%"},
         )
         if not tags:
-            raise HTTPException(status_code=404, detail="No tags found")
+            return []
         return [tag["tag"] for tag in tags]
     finally:
         db.disconnect()

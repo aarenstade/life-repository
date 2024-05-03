@@ -14,7 +14,7 @@ const FileIcon: FC<{ uri: string; onDelete?: () => void; onClick?: () => void }>
   const renderDeleteButton = () => (
     <TouchableOpacity style={{ position: "absolute", top: 0, right: 0, padding: 5, zIndex: 1 }} onPress={onDelete}>
       <View style={{ backgroundColor: "white", borderRadius: 50, padding: 2 }}>
-        <Feather name='x' size={16} color='black' />
+        <Feather name='x' size={18} color='black' />
       </View>
     </TouchableOpacity>
   );

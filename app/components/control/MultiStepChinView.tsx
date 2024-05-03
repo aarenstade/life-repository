@@ -51,6 +51,7 @@ const chinViewStyles = StyleSheet.create({
   chinViewButtonText: {
     color: "white",
     textAlign: "center",
+    fontSize: 18,
   },
 });
 

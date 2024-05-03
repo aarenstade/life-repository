@@ -17,7 +17,6 @@ const SelectImagesView: FC<SelectImagesViewProps> = ({ images, setImages }) => {
 
 const styles = StyleSheet.create({
   selectImagesContainer: {
-    flex: 1,
     justifyContent: "space-between",
     marginBottom: 20,
   },

@@ -94,10 +94,8 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   return (
     <View style={mainStyles.container}>
-      <ScrollView>
-        {view}
-        {file_uris && <FilePreviewGrid files_uris={file_uris} onFileUrisChange={setFileUris} />}
-      </ScrollView>
+      {view}
+      <ScrollView>{file_uris && <FilePreviewGrid files_uris={file_uris} onFileUrisChange={setFileUris} />}</ScrollView>
       <MultiStepChinView onContinue={handleNextStep} onCancel={handleCancel} onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined} />
     </View>
   );
