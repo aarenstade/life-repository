@@ -44,7 +44,7 @@ const CardButton: FC<CardButtonProps> = ({ icon, title, subtitle, onClick }) => 
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={handlePress} style={styles.touchable}>
-        <View>{icon}</View>
+        <View style={{ marginRight: 8 }}>{icon}</View>
         <View>
           <Text style={styles.title}>{title}</Text>
           {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
