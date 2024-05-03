@@ -11,7 +11,6 @@ const HomePage: FC<HomePageProps> = ({ navigation }) => {
 
   const styles = StyleSheet.create({
     container: {
-      flex: 1,
       justifyContent: "center",
       alignItems: "center",
       marginTop: 16,
@@ -23,6 +22,7 @@ const HomePage: FC<HomePageProps> = ({ navigation }) => {
     <View style={styles.container}>
       <CardButton icon={<Feather name='file' size={24} color='black' />} title='File System' onClick={() => navigateToPage("file_system")} />
       <CardButton icon={<Feather name='plus-circle' size={24} color='black' />} title='Add Files' onClick={() => navigateToPage("add_files")} />
+      <CardButton icon={<Feather name='tool' size={24} color='black' />} title='Testing' onClick={() => navigateToPage("testing")} />
     </View>
   );
 };
