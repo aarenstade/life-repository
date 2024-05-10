@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react";
-import { Alert, ScrollView, View, StyleSheet } from "react-native";
+import { Alert, ScrollView, View, Text, StyleSheet } from "react-native";
 import { AddFilesPageProps } from "../App";
 import FilePreviewGrid from "../components/media/FilePreviewGrid";
 import MultiStepChinView from "../components/control/MultiStepChinView";
@@ -7,9 +7,10 @@ import SelectImagesView from "../views/selection/SelectImagesView";
 import AnnotationViewFileGroup from "../views/annotation/AnnotationViewFileGroup";
 import AnnotationViewIndividualFile from "../views/annotation/AnnotationViewIndividualFile";
 import { GroupFileAnnotation, IndividualFileAnnotation } from "../types/annotation";
+import DismissKeyboardView from "../components/containers/DismissKeyboardView";
 
 const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
-  const steps = ["select-files", "annotate-group", "annotate-individual"];
+  const steps = ["select-files", "annotate-group", "annotate-individual", "review"];
 
   const [step, setStep] = useState("select-files");
   const [file_uris, setFileUris] = useState<string[]>([]);
@@ -92,9 +93,13 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     );
   }
 
+  if (step === "review") {
+    view = <View style={reviewStyles.reviewContainer}></View>;
+  }
+
   return (
     <View style={mainStyles.container}>
-      {view}
+      <DismissKeyboardView>{view}</DismissKeyboardView>
       <ScrollView>{file_uris && <FilePreviewGrid files_uris={file_uris} onFileUrisChange={setFileUris} />}</ScrollView>
       <MultiStepChinView onContinue={handleNextStep} onCancel={handleCancel} onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined} />
     </View>
@@ -132,6 +137,13 @@ const mainStyles = StyleSheet.create({
     color: "#ffffff",
     fontWeight: "bold",
     textAlign: "center",
+  },
+});
+
+const reviewStyles = StyleSheet.create({
+  reviewContainer: {
+    flex: 1,
+    padding: 16,
   },
 });
 
