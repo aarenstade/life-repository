@@ -19,3 +19,16 @@ async def get_tag_annotations(request: Request, search: str):
         return [tag["tag"] for tag in tags]
     finally:
         db.disconnect()
+
+
+@router.post("/insert", response_model=dict)
+async def insert_tag(request: Request):
+    body = await request.json()
+    db = request.app.state.db
+    try:
+        db.insert("tags", {"tag": body["tag"]})
+        return {"message": "Tag inserted successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.disconnect()
