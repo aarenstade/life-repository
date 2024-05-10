@@ -19,8 +19,6 @@ const fetchAPI = async (url: string, endpointName: string, params?: any, method:
   try {
     let endpoint = createServerURL(url, endpointName);
 
-    console.log(endpoint);
-
     let options: any = {
       method,
       headers: {
