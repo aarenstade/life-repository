@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
 import MultiStepChinView from "../../components/control/MultiStepChinView";
 import FileDisplay from "../../components/media/FileDisplay";
@@ -14,13 +14,15 @@ const AnnotationViewIndividualFile: FC<AnnotationViewProps> = ({
   onDataChange,
   onNextStep,
   onPreviousStep,
+  onDone,
+  onCancel,
 }) => {
   const [currentFileUri, setCurrentFileUri] = useState<string>(file_uris[0]);
   const [data, setData] = useState<Record<string, IndividualFileAnnotation>>(
     !_.isEmpty(initialData) ? initialData : file_uris.reduce((acc, uri) => ({ ...acc, [uri]: { description: "" } }), {})
   );
 
-  const { width, height } = Dimensions.get("window");
+  const { height } = Dimensions.get("window");
 
   useEffect(() => {
     onDataChange(data);
@@ -31,7 +33,7 @@ const AnnotationViewIndividualFile: FC<AnnotationViewProps> = ({
     if (currentIndex < file_uris.length - 1) {
       setCurrentFileUri(file_uris[currentIndex + 1]);
     } else {
-      onNextStep();
+      onNextStep?.();
     }
   };
 
@@ -40,13 +42,16 @@ const AnnotationViewIndividualFile: FC<AnnotationViewProps> = ({
     if (currentIndex > 0) {
       setCurrentFileUri(file_uris[currentIndex - 1]);
     } else {
-      onPreviousStep();
+      onPreviousStep?.();
     }
   };
 
   const updateFileDescription = (text: string) => {
     setData({ ...data, [currentFileUri]: { ...data[currentFileUri], description: text } });
   };
+
+  const handleDone = () => onDone?.();
+  const handleCancel = () => onCancel?.();
 
   return (
     <View style={individualViewStyles.annotateIndividualContainer}>
@@ -62,9 +67,20 @@ const AnnotationViewIndividualFile: FC<AnnotationViewProps> = ({
           insetBottom={height * 0.12}
         />
       </View>
-      <View style={{ width: "100%", height: "10%", display: "flex", justifyContent: "center", overflow: "hidden" }}>
-        <MultiStepChinView onContinue={navigateToNextStep} onCancel={null} onBack={navigateToPreviousStep} />
-      </View>
+      {file_uris.length > 1 ? (
+        <View style={{ width: "100%", height: "10%", display: "flex", justifyContent: "center", overflow: "hidden" }}>
+          <MultiStepChinView onContinue={navigateToNextStep} onCancel={null} onBack={navigateToPreviousStep} />
+        </View>
+      ) : (
+        <View style={{ flexDirection: "row", justifyContent: "space-around", padding: 10 }}>
+          <TouchableOpacity onPress={handleDone} style={{ padding: 10, backgroundColor: "green", borderRadius: 5 }}>
+            <Text style={{ color: "#fff" }}>Done</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleCancel} style={{ padding: 10, backgroundColor: "red", borderRadius: 5 }}>
+            <Text style={{ color: "#fff" }}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
