@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from "react";
+import React, { FC } from "react";
 import { View, Alert, TouchableOpacity, Text, StyleSheet } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
@@ -7,12 +7,13 @@ import FileGrid from "./FilePreviewGrid";
 
 interface ImageCameraPickerProps {
   images: string[];
-  onImagesChanged: (images: string[]) => void;
+  onImagesChanged?: (images: string[]) => void;
+  onImageSelect?: (image: string) => void;
   selectMultiple?: boolean;
   showImages?: boolean;
 }
 
-const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged, selectMultiple, showImages = false }) => {
+const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged, onImageSelect, selectMultiple, showImages = false }) => {
   const requestCameraPermissions = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -43,8 +44,12 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
 
     if (!result.canceled && result.assets) {
       const newImages = result.assets.map((img) => img.uri);
-      const allImages = Array.from(new Set([...images, ...newImages]));
-      onImagesChanged(allImages);
+      if (selectMultiple && onImagesChanged) {
+        const allImages = Array.from(new Set([...images, ...newImages]));
+        onImagesChanged(allImages);
+      } else if (!selectMultiple && onImageSelect && newImages.length > 0) {
+        onImageSelect(newImages[0]);
+      }
     }
   };
 
@@ -56,8 +61,12 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
       quality: 1,
     });
 
-    if (!result.canceled && result.assets) {
-      onImagesChanged([...images, ...result.assets.map((img) => img.uri)]);
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      if (selectMultiple && onImagesChanged) {
+        onImagesChanged([...images, ...result.assets.map((img) => img.uri)]);
+      } else if (!selectMultiple && onImageSelect) {
+        onImageSelect(result.assets[0].uri);
+      }
     }
   };
 
