@@ -4,14 +4,20 @@ import ImageCameraPicker from "../../components/media/ImageCameraPicker";
 
 interface SelectImagesViewProps {
   images: string[];
-  setImages: (images: string[]) => void;
+  onSelectMultipleImages: (images: string[]) => void;
+  onSelectSingleImage: (image: string) => void;
   selectMultiple?: boolean;
 }
 
-const SelectImagesView: FC<SelectImagesViewProps> = ({ images, setImages, selectMultiple }) => {
+const SelectImagesView: FC<SelectImagesViewProps> = ({ images, onSelectSingleImage, onSelectMultipleImages, selectMultiple }) => {
   return (
     <View style={styles.selectImagesContainer}>
-      <ImageCameraPicker images={images} onImagesChanged={setImages} selectMultiple={selectMultiple} />
+      <ImageCameraPicker
+        images={images}
+        onImagesChanged={onSelectMultipleImages}
+        onImageSelect={onSelectSingleImage}
+        selectMultiple={selectMultiple}
+      />
     </View>
   );
 };
