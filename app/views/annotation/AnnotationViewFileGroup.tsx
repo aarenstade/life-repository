@@ -1,64 +1,39 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
 import FilePreviewGrid from "../../components/media/FilePreviewGrid";
-import _ from "lodash";
 import TagAnnotationInput from "../../components/inputs/transcribe-inputs/TagAnnotationInput";
+import { useActiveAnnotation } from "../../state/annotations";
+import _ from "lodash";
 
-export interface AnnotationViewProps {
-  file_uris: string[];
+interface AnnotationViewFileGroupProps {
   hideFilePreviewGrid?: boolean;
-  initialData?: any;
-  onDataChange: (data: any) => void;
-  onFileUrisChange: (file_uris: string[]) => void;
-  onPreviousStep: () => void;
-  onNextStep: () => void;
-  onDone?: () => void;
-  onCancel?: () => void;
+  onFileClick?: (file_uri: string) => void;
+  onFileRemove?: (file_uri: string) => void;
 }
 
-const AnnotationViewFileGroup: FC<AnnotationViewProps> = ({
-  file_uris,
-  onFileUrisChange,
-  hideFilePreviewGrid,
-  initialData,
-  onDataChange,
-  onNextStep,
-  onPreviousStep,
-}) => {
-  const [groupData, setGroupData] = useState(
-    initialData
-      ? initialData
-      : {
-          title: "",
-          description: "",
-          tags: [],
-        }
-  );
+const AnnotationViewFileGroup: FC<AnnotationViewFileGroupProps> = ({ hideFilePreviewGrid, onFileClick, onFileRemove }) => {
+  const [groupTags, setGroupTags] = useActiveAnnotation((store) => [store.group.tags, store.setGroupTags]);
+  const [group, setGroup] = useActiveAnnotation((store) => [store.group, store.setGroup]);
 
-  useEffect(() => {
-    onDataChange(groupData);
-  }, [groupData]);
+  const file_uris = useMemo(() => group.files.map((file) => file.uri) || [], [group.files]);
 
   return (
     <View style={groupViewStyles.annotateGroupContainer}>
       <Text style={groupViewStyles.groupDetailsText}>Group Details</Text>
+      <TranscribeTextInput value={group.title} onChangeText={(text) => setGroup({ ...group, title: text })} placeholder='Enter title' />
       <TranscribeTextInput
-        value={groupData.title}
-        onChangeText={(text) => setGroupData((prev) => ({ ...prev, title: text }))}
-        placeholder='Enter title'
-      />
-      <TranscribeTextInput
-        value={groupData.description}
-        onChangeText={(text) => setGroupData((prev) => ({ ...prev, description: text }))}
+        value={group.description}
+        onChangeText={(text) => setGroup({ ...group, description: text })}
         placeholder='Enter description'
         multiline
+        d
         noFullScreen
       />
-      <TagAnnotationInput tags={groupData.tags} onTagsChange={(newTags) => setGroupData((prev) => ({ ...prev, tags: newTags }))} />
+      <TagAnnotationInput tags={groupTags} onTagsChange={setGroupTags} />
       {!hideFilePreviewGrid && (
         <ScrollView style={groupViewStyles.scollViewContainer}>
-          <FilePreviewGrid files_uris={file_uris} onFileUrisChange={onFileUrisChange} />
+          <FilePreviewGrid files_uris={file_uris} onFileRemove={onFileRemove} onFileClick={onFileClick} />
         </ScrollView>
       )}
     </View>
