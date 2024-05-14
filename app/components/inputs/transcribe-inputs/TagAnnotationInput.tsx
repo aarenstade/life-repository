@@ -3,10 +3,12 @@ import { View, TextInput, StyleSheet, Text, TouchableOpacity, KeyboardAvoidingVi
 import Modal from "../../../components/Modal";
 import useConfig from "../../../hooks/useConfig";
 import fetchAPI from "../../../lib/api";
+import { Tag } from "../../../types/annotation";
+import shortid from "shortid";
 
 interface TagAnnotationInputProps {
-  tags: string[];
-  onTagsChange: (tags: string[]) => void;
+  tags: Tag[];
+  onTagsChange: (tags: Tag[]) => void;
 }
 
 interface AutocompleteListProps {
@@ -16,8 +18,8 @@ interface AutocompleteListProps {
 
 const AutocompleteList: FC<AutocompleteListProps> = ({ suggestions, onSelect }) => (
   <View style={styles.autocompleteList}>
-    {suggestions.map((item) => (
-      <TouchableOpacity key={item} onPress={() => onSelect(item)} style={styles.suggestionItem}>
+    {suggestions.map((item, index) => (
+      <TouchableOpacity key={index} onPress={() => onSelect(item)} style={styles.suggestionItem}>
         <Text style={styles.suggestionText}>{item}</Text>
       </TouchableOpacity>
     ))}
@@ -25,7 +27,7 @@ const AutocompleteList: FC<AutocompleteListProps> = ({ suggestions, onSelect }) 
 );
 
 const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, onTagsChange }) => {
-  const [tags, setTags] = useState<string[]>(initialTags || []);
+  const [tags, setTags] = useState<Tag[]>(initialTags || []);
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -64,7 +66,7 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
   const handleInputChange = (text: string) => {
     const lastChar = text.charAt(text.length - 1);
     if (lastChar === ",") {
-      const newTag = text.slice(0, -1).trim();
+      const newTag = { id: shortid.generate(), tag: text.slice(0, -1).trim() };
       if (newTag && !tags.includes(newTag)) {
         setTags([...tags, newTag]);
       }
@@ -76,8 +78,8 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
   };
 
   const addTag = async (tag: string) => {
-    if (tag && !tags.includes(tag)) {
-      setTags([...tags, tag]);
+    if (tag && !tags.some((t) => t.tag === tag)) {
+      setTags([...tags, { id: shortid.generate(), tag }]);
     }
     setInputValue("");
     setSuggestions([]);
@@ -95,7 +97,7 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
       <View style={styles.tagsContainer}>
         {tags.map((tag, index) => (
           <View key={index} style={styles.tag}>
-            <Text style={styles.tagText}>{tag}</Text>
+            <Text style={styles.tagText}>{tag.tag}</Text>
             <TouchableOpacity onPress={() => removeTag(index)} style={styles.tagCloseButton}>
               <Text style={styles.tagCloseText}>×</Text>
             </TouchableOpacity>
