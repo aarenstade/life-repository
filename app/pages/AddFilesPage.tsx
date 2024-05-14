@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react";
-import { Alert, ScrollView, View, Text, StyleSheet } from "react-native";
+import { Alert, ScrollView, View, StyleSheet } from "react-native";
 import { AddFilesPageProps } from "../App";
 import FilePreviewGrid from "../components/media/FilePreviewGrid";
 import MultiStepChinView from "../components/control/MultiStepChinView";
@@ -8,12 +8,16 @@ import AnnotationViewFileGroup from "../views/annotation/AnnotationViewFileGroup
 import AnnotationViewIndividualFile from "../views/annotation/AnnotationViewIndividualFile";
 import { GroupFileAnnotation, IndividualFileAnnotation } from "../types/annotation";
 import DismissKeyboardView from "../components/containers/DismissKeyboardView";
+import CardButton from "../components/CardButton";
 
 const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
-  const steps = ["select-files", "annotate-group", "annotate-individual", "review"];
+  const steps = ["add-type", "select-files", "annotate-group", "annotate-individual", "review"];
 
-  const [step, setStep] = useState("select-files");
+  const [step, setStep] = useState("add-type");
   const [file_uris, setFileUris] = useState<string[]>([]);
+  const [new_file_uri, setNewFileUri] = useState<string>();
+
+  const [addType, setAddType] = useState<"individual-then-group" | "group-then-individual">(null);
 
   const [individualData, setIndividualData] = useState<Record<string, IndividualFileAnnotation>>({});
   const [groupData, setGroupData] = useState<GroupFileAnnotation>({
@@ -41,6 +45,27 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     }
   };
 
+  const handleSetFileUris = (newFileUris: string[]) => {
+    console.log(newFileUris);
+    const newFiles = newFileUris.filter((uri) => !file_uris.includes(uri));
+    setFileUris(newFileUris);
+    if (newFiles.length > 0 && addType == "individual-then-group") {
+      setNewFileUri(newFiles[0]);
+      setStep("annotate-individual");
+    }
+  };
+
+  const handleAnnotateIndividualDone = () => {
+    setNewFileUri(null);
+    setStep("select-files");
+  };
+
+  const handleAnnotateIndividualCancel = () => {
+    setFileUris(file_uris.filter((uri) => uri !== new_file_uri));
+    setNewFileUri(null);
+    setStep("select-files");
+  };
+
   const handleCancel = () => {
     if (file_uris.length > 0) {
       Alert.alert(
@@ -62,14 +87,30 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   let view;
 
+  if (step === "add-type") {
+    const handleSetAddType = (type: "individual-then-group" | "group-then-individual") => {
+      setAddType(type);
+      setStep("select-files");
+    };
+
+    view = (
+      <View>
+        <View style={mainStyles.buttonContainer}>
+          <CardButton title='Individual then Group' onClick={() => handleSetAddType("individual-then-group")} icon={undefined} />
+          <CardButton title='Group then Individual' onClick={() => handleSetAddType("group-then-individual")} icon={undefined} />
+        </View>
+      </View>
+    );
+  }
+
   if (step === "select-files") {
-    view = <SelectImagesView images={file_uris} setImages={setFileUris} />;
+    view = <SelectImagesView images={file_uris} setImages={handleSetFileUris} selectMultiple={addType == "group-then-individual"} />;
   }
 
   if (step == "annotate-group") {
     view = (
       <AnnotationViewFileGroup
-        file_uris={file_uris}
+        file_uris={addType == "group-then-individual" ? file_uris : new_file_uri ? [new_file_uri] : file_uris}
         onFileUrisChange={setFileUris}
         initialData={groupData}
         onDataChange={setGroupData}
@@ -89,6 +130,8 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
         onDataChange={setIndividualData}
         onPreviousStep={handlePreviousStep}
         onNextStep={handleNextStep}
+        onDone={handleAnnotateIndividualDone}
+        onCancel={handleAnnotateIndividualCancel}
       />
     );
   }
