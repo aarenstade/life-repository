@@ -5,7 +5,6 @@ export interface BaseAnnotationGroup {
   title: string;
   description: string;
   tags: Tag[];
-  num_files: number;
   flow_type: AnnotationFlowType;
   created_at: string;
   updated_at: string;
