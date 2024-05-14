@@ -8,10 +8,11 @@ import FileGrid from "./FilePreviewGrid";
 interface ImageCameraPickerProps {
   images: string[];
   onImagesChanged: (images: string[]) => void;
+  selectMultiple?: boolean;
   showImages?: boolean;
 }
 
-const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged, showImages = false }) => {
+const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged, selectMultiple, showImages = false }) => {
   const requestCameraPermissions = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -36,7 +37,7 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
+      allowsMultipleSelection: selectMultiple,
       quality: 1,
     });
 
