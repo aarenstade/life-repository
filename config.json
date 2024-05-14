@@ -1,6 +1,6 @@
 {
     "sqlite_database_path": "/Users/aaren/life-repository/data/dev_db1.db",
-    "sqlite_database_schema_path": "/Users/aaren/life-repository/life-repo-server/schemas/schema_dev_v1.sql",
+    "sqlite_database_schema_path": "/Users/aaren/life-repository/server/schemas/schema_dev_v1.sql",
     "root_paths": [
         "/Users/aaren/life-repository/files/test"
     ]
