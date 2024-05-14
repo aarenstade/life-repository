@@ -57,4 +57,5 @@ const useConfig = () => {
 
   return { ...config, setApiUrl };
 };
+
 export default useConfig;

@@ -58,4 +58,6 @@ Things we want to capture about each file:
 - Manual content description
 - Generated content description
 
+## Rough Notes on Search
+- Integrate vector search into Sqlite with [Sqlite-VSS](https://python.langchain.com/v0.1/docs/integrations/vectorstores/sqlitevss/)
 

@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: 10,
   },
   addButton: {
     backgroundColor: "#007bff",

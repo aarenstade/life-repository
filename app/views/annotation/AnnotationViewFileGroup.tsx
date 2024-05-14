@@ -13,6 +13,8 @@ export interface AnnotationViewProps {
   onFileUrisChange: (file_uris: string[]) => void;
   onPreviousStep: () => void;
   onNextStep: () => void;
+  onDone?: () => void;
+  onCancel?: () => void;
 }
 
 const AnnotationViewFileGroup: FC<AnnotationViewProps> = ({
