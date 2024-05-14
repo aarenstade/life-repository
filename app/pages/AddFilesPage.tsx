@@ -1,5 +1,5 @@
-import { FC, useEffect, useMemo, useState } from "react";
-import { Alert, ScrollView, View, StyleSheet } from "react-native";
+import { FC, useEffect, useState } from "react";
+import { Alert, ScrollView, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { AddFilesPageProps } from "../App";
 import FilePreviewGrid from "../components/media/FilePreviewGrid";
 import MultiStepChinView from "../components/control/MultiStepChinView";
@@ -8,23 +8,50 @@ import AnnotationViewFileGroup from "../views/annotation/AnnotationViewFileGroup
 import AnnotationViewIndividualFile from "../views/annotation/AnnotationViewIndividualFile";
 import DismissKeyboardView from "../components/containers/DismissKeyboardView";
 import CardButton from "../components/CardButton";
-import { useActiveAnnotation } from "../state/annotations";
-import { FileAnnotation } from "../types/annotation";
+import { useActiveAnnotation, useAnnotationDrafts } from "../state/annotations";
+import { AnnotationGroup, FileAnnotation } from "../types/annotation";
 import { utcNow } from "../utilities/general";
+import AnnotationDraftsList from "../components/annotation/AnnotationDraftsList";
+import shortid from "shortid";
 
 const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   const steps = ["add-type", "select-files", "annotate-group", "annotate-individual", "review"];
 
-  const [flowType, setFlowType] = useActiveAnnotation((store) => [store.group.flow_type, store.setFlowType]);
+  const [drafts, setDrafts] = useAnnotationDrafts((store) => [store.draftGroups, store.setDraftGroups]);
+  const [flowType, setFlowType] = useActiveAnnotation((store) => [store.group ? store.group.flow_type : "individual-then-group", store.setFlowType]);
   const [step, setStep] = useActiveAnnotation((store) => [store.step, store.setStep]);
-  const [files, setFiles, updateFile, removeFile] = useActiveAnnotation((store) => [
-    store.group.files,
+  const [group, setGroup, setFiles, updateFile, removeFile] = useActiveAnnotation((store) => [
+    store.group,
+    store.setGroup,
     store.setFiles,
     store.updateFile,
     store.removeFile,
   ]);
 
   const [activeFileUri, setActiveFileUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    const defaultGroup: AnnotationGroup = {
+      group_id: shortid.generate(),
+      title: "Untitled Group",
+      description: "",
+      tags: [],
+      flow_type: "individual-then-group",
+      created_at: utcNow(),
+      updated_at: utcNow(),
+      files: [],
+    };
+    setGroup(defaultGroup);
+  }, []);
+
+  const groupHasDraft = drafts && drafts.find((draft) => draft.group_id === group.group_id);
+
+  const updateGroupDraft = (updatedGroup: AnnotationGroup) => {
+    if (groupHasDraft) {
+      const groupData = { ...updatedGroup, updated_at: utcNow() };
+      setDrafts(drafts.map((draft) => (draft.group_id === group.group_id ? groupData : draft)));
+    }
+  };
 
   const handleNextStep = () => {
     const currentStepIndex = steps.indexOf(step);
@@ -42,6 +69,10 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   const handlePreviousStep = () => {
     const currentStepIndex = steps.indexOf(step);
 
+    if (steps[currentStepIndex] == "select-files") {
+      updateGroupDraft(group);
+    }
+
     if (flowType == "individual-then-group") {
       if (steps[currentStepIndex] == "annotate-group") return setStep("select-files");
       if (steps[currentStepIndex] == "review") return setStep("annotate-group");
@@ -58,21 +89,31 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       return;
     }
 
-    if (files.length > 0) {
+    updateGroupDraft(group);
+
+    if (group.files.length > 0 && !groupHasDraft) {
       Alert.alert(
-        "Confirm",
-        "Are you sure you want to cancel? All unsaved changes will be lost.",
+        "Save as Draft",
+        "Do you want to save your changes as a draft?",
         [
           {
-            text: "Cancel",
-            style: "cancel",
+            text: "Yes",
+            onPress: () => {
+              setDrafts([...(drafts || []), group]);
+              resetState();
+              navigation.navigate("home");
+            },
           },
           {
-            text: "OK",
+            text: "No",
             onPress: () => {
               resetState();
               navigation.navigate("home");
             },
+          },
+          {
+            text: "Cancel",
+            style: "cancel",
           },
         ],
         { cancelable: false }
@@ -90,37 +131,9 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     setActiveFileUri(null);
   };
 
-  let view;
-
-  if (step === "add-type") {
-    const handleSetAddType = (type: "individual-then-group" | "group-then-individual") => {
-      setFlowType(type);
-      setStep("select-files");
-    };
-
-    view = (
-      <View>
-        <View style={mainStyles.buttonContainer}>
-          <CardButton
-            title='Individual then Group'
-            subtitle='Annotate each file immediately after selecting.'
-            onClick={() => handleSetAddType("individual-then-group")}
-            icon={undefined}
-          />
-          <CardButton
-            title='Group then Individual'
-            subtitle='Annotate each file after selecting the whole group.'
-            onClick={() => handleSetAddType("group-then-individual")}
-            icon={undefined}
-          />
-        </View>
-      </View>
-    );
-  }
-
   const handleFileClick = (uri: string) => {
     setStep("annotate-individual");
-    setActiveFileUri(files.find((file) => file.uri === uri)?.uri || null);
+    setActiveFileUri(group.files.find((file) => file.uri === uri)?.uri || null);
   };
 
   const handleFileRemove = (uri: string) => removeFile(uri);
@@ -128,10 +141,10 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   const handleSingleFileChange = (updatedFile: FileAnnotation) => updateFile(updatedFile);
 
   const handleSelectMultipleFileUris = (newFileUris: string[]) => {
-    const file_uris = files.map((file) => file.uri);
+    const file_uris = group.files.map((file) => file.uri);
     const newUris = newFileUris.filter((uri) => !file_uris.includes(uri));
     const newFiles: FileAnnotation[] = newUris.map((uri) => ({ uri, description: "", tags: [], annotated_at: null, added_at: utcNow() }));
-    const updatedFiles = [...files, ...newFiles].reduce((acc, file) => {
+    const updatedFiles = [...group.files, ...newFiles].reduce((acc, file) => {
       acc[file.uri] = acc[file.uri] ? (new Date(acc[file.uri].added_at) > new Date(file.added_at) ? acc[file.uri] : file) : file;
       return acc;
     }, {} as { [uri: string]: FileAnnotation });
@@ -140,14 +153,13 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   const handleSelectSingleFileUri = (newFileUri: string) => {
     const newFile = { uri: newFileUri, description: "", tags: [], annotated_at: null, added_at: utcNow() };
-    const file_uris = files.map((file) => file.uri);
+    const file_uris = group.files.map((file) => file.uri);
 
     if (!file_uris.includes(newFileUri)) {
-      setFiles([...files, newFile]);
+      setFiles([...group.files, newFile]);
     }
 
     if (flowType == "individual-then-group") {
-      console.log("select single uri", newFile);
       setActiveFileUri(newFile.uri);
       setStep("annotate-individual");
     }
@@ -161,10 +173,91 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     }
   };
 
+  const handleEnterDraft = (groupId: string) => {
+    const draft = drafts.find((draft) => draft.group_id === groupId);
+    if (draft) {
+      resetState();
+      setGroup(draft);
+      setStep("select-files");
+    }
+  };
+
+  const handleDeleteDraft = (groupId: string) => {
+    Alert.alert("Confirm Delete", "Are you sure you want to delete this draft?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      { text: "OK", onPress: () => setDrafts(drafts.filter((draft) => draft.group_id !== groupId)) },
+    ]);
+  };
+
+  let view;
+
+  if (step === "add-type") {
+    const handleSetAddType = (type: "individual-then-group" | "group-then-individual") => {
+      setFlowType(type);
+      setStep("select-files");
+    };
+
+    return (
+      <View style={mainStyles.container}>
+        <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: 10 }}>Create a new group</Text>
+        <View style={mainStyles.buttonContainer}>
+          <CardButton
+            title='Individual then Group'
+            subtitle='Annotate each file immediately after selecting.'
+            onClick={() => handleSetAddType("individual-then-group")}
+            size='small'
+            icon={undefined}
+          />
+          <CardButton
+            title='Group then Individual'
+            subtitle='Annotate each file after selecting the whole group.'
+            onClick={() => handleSetAddType("group-then-individual")}
+            size='small'
+            icon={undefined}
+          />
+        </View>
+        <View style={{ height: 1, backgroundColor: "#e0e0e0", marginVertical: 20 }}></View>
+        {drafts && drafts.length > 0 && (
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 20 }}>Draft Groups</Text>
+            <AnnotationDraftsList drafts={drafts} onDelete={handleDeleteDraft} onClick={handleEnterDraft} />
+          </View>
+        )}
+        <TouchableOpacity
+          onPress={handleCancel}
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-around",
+            padding: 10,
+            borderRadius: 20,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            marginHorizontal: 30,
+            marginBottom: 20,
+            backgroundColor: "#A4A4A4", // Gray
+          }}
+        >
+          <Text
+            style={{
+              color: "white",
+              textAlign: "center",
+              fontSize: 18,
+            }}
+          >
+            Cancel
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   if (step === "select-files") {
     view = (
       <SelectImagesView
-        images={files.map((file) => file.uri) || []}
+        images={group.files.map((file) => file.uri) || []}
         onSelectSingleImage={handleSelectSingleFileUri}
         onSelectMultipleImages={handleSelectMultipleFileUris}
         selectMultiple={flowType == "group-then-individual"}
@@ -179,7 +272,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   if (step == "annotate-individual") {
     return (
       <AnnotationViewIndividualFile
-        files={activeFileUri ? files.filter((file) => file.uri === activeFileUri) : files}
+        files={activeFileUri ? group.files.filter((file) => file.uri === activeFileUri) : group.files}
         annotateMultiple={flowType == "group-then-individual"}
         onChange={activeFileUri ? handleSingleFileChange : handleFilesChange}
         onDone={handleAnnotateIndividualDone}
@@ -197,7 +290,9 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     <View style={mainStyles.container}>
       <DismissKeyboardView>{view}</DismissKeyboardView>
       <ScrollView>
-        {files && <FilePreviewGrid files_uris={files.map((file) => file.uri) || []} onFileClick={handleFileClick} onFileRemove={handleFileRemove} />}
+        {group.files && (
+          <FilePreviewGrid files_uris={group.files.map((file) => file.uri) || []} onFileClick={handleFileClick} onFileRemove={handleFileRemove} />
+        )}
       </ScrollView>
       <MultiStepChinView onContinue={handleNextStep} onCancel={handleCancel} onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined} />
     </View>
