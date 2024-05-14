@@ -1,83 +1,96 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
 import MultiStepChinView from "../../components/control/MultiStepChinView";
 import FileDisplay from "../../components/media/FileDisplay";
-import { IndividualFileAnnotation } from "../../types/annotation";
-import { AnnotationViewProps } from "./AnnotationViewFileGroup";
+import { FileAnnotation } from "../../types/annotation";
 import _ from "lodash";
 
-const AnnotationViewIndividualFile: FC<AnnotationViewProps> = ({
-  file_uris,
-  onFileUrisChange,
-  initialData,
-  onDataChange,
-  onNextStep,
-  onPreviousStep,
-  onDone,
-  onCancel,
-}) => {
-  const [currentFileUri, setCurrentFileUri] = useState<string>(file_uris[0]);
-  const [data, setData] = useState<Record<string, IndividualFileAnnotation>>(
-    !_.isEmpty(initialData) ? initialData : file_uris.reduce((acc, uri) => ({ ...acc, [uri]: { description: "" } }), {})
-  );
+interface IndividualFileAnnotationProps {
+  file: FileAnnotation;
+  onUpdate: (file: FileAnnotation) => void;
+}
 
+const IndividualFileAnnotation: FC<IndividualFileAnnotationProps> = ({ file, onUpdate }) => {
   const { height } = Dimensions.get("window");
 
-  useEffect(() => {
-    onDataChange(data);
-  }, [data]);
-
-  const navigateToNextStep = () => {
-    const currentIndex = file_uris.indexOf(currentFileUri);
-    if (currentIndex < file_uris.length - 1) {
-      setCurrentFileUri(file_uris[currentIndex + 1]);
-    } else {
-      onNextStep?.();
-    }
-  };
-
-  const navigateToPreviousStep = () => {
-    const currentIndex = file_uris.indexOf(currentFileUri);
-    if (currentIndex > 0) {
-      setCurrentFileUri(file_uris[currentIndex - 1]);
-    } else {
-      onPreviousStep?.();
-    }
-  };
-
   const updateFileDescription = (text: string) => {
-    setData({ ...data, [currentFileUri]: { ...data[currentFileUri], description: text } });
+    onUpdate({ ...file, description: text });
   };
 
-  const handleDone = () => onDone?.();
-  const handleCancel = () => onCancel?.();
+  return (
+    <View style={individualViewStyles.mainContentContainer}>
+      <FileDisplay file_uri={file.uri} />
+      <TranscribeTextInput multiline value={file.description} onChangeText={updateFileDescription} insetBottom={height * 0.12} />
+    </View>
+  );
+};
+
+interface AnnotationViewIndividualFileProps {
+  files: FileAnnotation[];
+  annotateMultiple?: boolean;
+  onChange: (files: FileAnnotation | FileAnnotation[]) => void;
+  onDone?: () => void;
+  onBack?: () => void;
+  onCancel?: () => void;
+}
+
+const AnnotationViewIndividualFile: FC<AnnotationViewIndividualFileProps> = ({ files, annotateMultiple, onChange, onDone, onBack, onCancel }) => {
+  const [currentFileId, setCurrentFileId] = useState<string | undefined>(files[0]?.uri);
+
+  const findFileIndex = (fileId: string) => files.findIndex((file) => file.uri === fileId);
+
+  const navigateToNextFile = () => {
+    const currentIndex = findFileIndex(currentFileId!);
+    if (currentIndex < files.length - 1) {
+      setCurrentFileId(files[currentIndex + 1].uri);
+    } else {
+      onDone && onDone();
+    }
+  };
+
+  const navigateToPreviousFile = () => {
+    const currentIndex = findFileIndex(currentFileId!);
+    if (currentIndex > 0) {
+      setCurrentFileId(files[currentIndex - 1].uri);
+    } else {
+      onBack && onBack();
+    }
+  };
+
+  const updateFileDescription = (updatedFile: FileAnnotation) => {
+    const updatedFiles = files.map((file) => (file.uri === currentFileId ? updatedFile : file));
+    onChange(annotateMultiple ? updatedFiles : updatedFile);
+  };
+
+  const currentFile = files.find((file) => file.uri === currentFileId);
 
   return (
     <View style={individualViewStyles.annotateIndividualContainer}>
-      <Text style={{ textAlign: "right", fontSize: 10, paddingRight: 5, paddingTop: 5, paddingBottom: 5 }}>
-        {file_uris.indexOf(currentFileUri) + 1} of {file_uris.length}
-      </Text>
-      <View style={individualViewStyles.mainContentContainer}>
-        <FileDisplay file_uri={currentFileUri} />
-        <TranscribeTextInput
-          multiline
-          value={data[currentFileUri]?.description || ""}
-          onChangeText={updateFileDescription}
-          insetBottom={height * 0.12}
-        />
-      </View>
-      {file_uris.length > 1 ? (
+      {annotateMultiple && (
+        <Text style={{ textAlign: "right", fontSize: 10, paddingRight: 5, paddingTop: 5, paddingBottom: 5 }}>
+          {findFileIndex(currentFileId!) + 1} of {files.length}
+        </Text>
+      )}
+      {currentFile && <IndividualFileAnnotation file={currentFile} onUpdate={updateFileDescription} />}
+      {annotateMultiple ? (
         <View style={{ width: "100%", height: "10%", display: "flex", justifyContent: "center", overflow: "hidden" }}>
-          <MultiStepChinView onContinue={navigateToNextStep} onCancel={null} onBack={navigateToPreviousStep} />
+          <MultiStepChinView onContinue={navigateToNextFile} onBack={navigateToPreviousFile} onCancel={onCancel} />
         </View>
       ) : (
         <View style={{ flexDirection: "row", justifyContent: "space-around", padding: 10 }}>
-          <TouchableOpacity onPress={handleDone} style={{ padding: 10, backgroundColor: "green", borderRadius: 5 }}>
-            <Text style={{ color: "#fff" }}>Done</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleCancel} style={{ padding: 10, backgroundColor: "red", borderRadius: 5 }}>
-            <Text style={{ color: "#fff" }}>Cancel</Text>
+          <TouchableOpacity
+            onPress={onDone}
+            style={{
+              borderRadius: 20,
+              paddingVertical: 10,
+              paddingHorizontal: 20,
+              marginHorizontal: 10,
+              marginBottom: 20,
+              backgroundColor: "#007AFF",
+            }}
+          >
+            <Text style={{ color: "white", textAlign: "center", fontSize: 18 }}>Done</Text>
           </TouchableOpacity>
         </View>
       )}
