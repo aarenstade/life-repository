@@ -2,7 +2,6 @@
 *.venv
 data
 devlogs
-files
 
 # life-repo-server
 *__pycache__
