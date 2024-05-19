@@ -5,7 +5,7 @@ import imagehash
 from PIL import Image
 from datasketch import MinHash
 
-from models.file_metadata import FileType
+from models.files import FileType
 from services.files.deduplication.base import Deduplicator, DuplicateResult
 from services.files.directory_file_organizer import DirectoryFileOrganizer
 

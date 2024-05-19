@@ -1,8 +1,8 @@
 import os
 from typing import Dict, List, Tuple, Union
 
+from models.files import FileType
 from models.file_metadata import (
-    FileType,
     FileMetadata,
     ImageMetadata,
     VideoMetadata,
@@ -14,7 +14,7 @@ from models.file_metadata import (
 
 
 class DirectoryFileOrganizer:
-    IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "bmp", "gif"}
+    IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "bmp", "gif", "heic"}
     VIDEO_EXTENSIONS = {"mp4", "avi", "mov", "mkv"}
     TEXT_EXTENSIONS = {"txt", "md", "doc", "docx", "pdf"}
     AUDIO_EXTENSIONS = {"mp3", "wav", "aac", "flac"}

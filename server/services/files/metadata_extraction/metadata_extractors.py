@@ -9,11 +9,11 @@ import zipfile
 import tarfile
 from langdetect import detect
 
+from models.files import FileType
 from models.file_metadata import (
     ArchiveMetadata,
     AudioMetadata,
     FileMetadata,
-    FileType,
     ImageMetadata,
     TextMetadata,
     VideoMetadata,
