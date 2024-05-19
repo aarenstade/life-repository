@@ -1,7 +1,6 @@
 import os
 from typing import Dict, List, Tuple, Union
 
-from services.files.metadata_extractors import FileMetadataExtractor
 from models.file_metadata import (
     FileType,
     FileMetadata,
@@ -48,36 +47,6 @@ class DirectoryFileOrganizer:
                 file_path = os.path.join(root, file)
                 file_paths.append(file_path)
         return file_paths
-
-    @staticmethod
-    def extract_metadata(file_paths: List[str]) -> List[
-        Tuple[
-            str,
-            Union[
-                FileMetadata,
-                ImageMetadata,
-                VideoMetadata,
-                TextMetadata,
-                AudioMetadata,
-                ArchiveMetadata,
-                DocumentMetadata,
-            ],
-        ]
-    ]:
-        file_metadata_list = []
-        metadata_extractor = FileMetadataExtractor()
-
-        for file_path in file_paths:
-            try:
-                metadata = metadata_extractor.extract_metadata(file_path)
-                file_metadata_list.append((file_path, metadata))
-            except Exception as e:
-                print(f"Failed to extract metadata for {file_path}: {e}")
-                file_metadata_list.append(
-                    (file_path, FileMetadata(size=os.path.getsize(file_path)))
-                )
-
-        return file_metadata_list
 
     @staticmethod
     def group_files_by_type(
