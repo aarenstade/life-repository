@@ -7,8 +7,20 @@ import mimetypes
 from fastapi import APIRouter, HTTPException, Request
 from fastapi import UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
-from models.file_io import FileItemModel
+
+# TODO remove this completely and utilize a partial type from tables
+class FileItemModel(BaseModel):
+    generic_file_type: str
+    specific_file_type: str
+    size_bytes: int
+    added_at: datetime
+    created_at: datetime
+    modified_at: datetime
+    is_directory: bool
+    name: str
+
 
 from config import (
     DATA_DIR,
