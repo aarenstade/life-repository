@@ -92,4 +92,17 @@ MAX_FILE_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024  # 100 MB
 
 class Config:
     def __init__(self):
-        pass
+        config_data = load_config()
+        self.root_path = ROOT_PATH
+        self.config_path = CONFIG_PATH
+        self.tmp_dir = TMP_DIR
+        self.data_dir = DATA_DIR
+        self.image_file_types = config_data.get("image_file_types", IMAGE_FILE_TYPES)
+        self.audio_file_types = config_data.get("audio_file_types", AUDIO_FILE_TYPES)
+        self.text_file_types = config_data.get("text_file_types", TEXT_FILE_TYPES)
+        self.data_file_types = config_data.get("data_file_types", DATA_FILE_TYPES)
+        self.max_file_upload_size_bytes = config_data.get(
+            "max_file_upload_size_bytes", MAX_FILE_UPLOAD_SIZE_BYTES
+        )
+
+        self.frame_pattern = "frame_%05d.jpg"
