@@ -1,60 +1,51 @@
-import os
-from enum import Enum
-from typing import Any, Tuple, Optional
+from typing import Optional
 from pydantic import BaseModel
-
-
-class FileType(str, Enum):
-    IMAGE = "Image"
-    VIDEO = "Video"
-    TEXT = "Text"
-    AUDIO = "Audio"
-    ARCHIVE = "Archive"
-    DOCUMENT = "Document"
-    OTHER = "Other"
+from datetime import datetime
 
 
 class FileMetadata(BaseModel):
     size: int
-    created_at: Optional[Any] = None
-    modified_at: Optional[Any] = None
+    created_at: datetime
+    modified_at: datetime
 
 
-class ImageMetadata(FileMetadata):
-    resolution: Optional[Tuple[int, int]] = None
+class ImageMetadata(BaseModel):
+    width: Optional[int] = None
+    height: Optional[int] = None
     color_mode: Optional[str] = None
     format: Optional[str] = None
 
 
-class VideoMetadata(FileMetadata):
-    duration: Optional[float] = None
-    resolution: Optional[Tuple[int, int]] = None
+class VideoMetadata(BaseModel):
+    duration: Optional[int] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
     framerate: Optional[float] = None
     codec: Optional[str] = None
     bitrate: Optional[int] = None
 
 
-class TextMetadata(FileMetadata):
+class TextMetadata(BaseModel):
     num_words: Optional[int] = None
     language: Optional[str] = None
     encoding: Optional[str] = None
 
 
-class AudioMetadata(FileMetadata):
+class AudioMetadata(BaseModel):
     bitrate: Optional[int] = None
-    duration: Optional[float] = None
+    duration: Optional[int] = None
     sample_rate: Optional[int] = None
     channels: Optional[int] = None
     codec: Optional[str] = None
 
 
-class ArchiveMetadata(FileMetadata):
+class ArchiveMetadata(BaseModel):
     num_files: Optional[int] = None
     compression_type: Optional[str] = None
     encrypted: Optional[bool] = None
 
 
-class DocumentMetadata(FileMetadata):
+class DocumentMetadata(BaseModel):
     num_pages: Optional[int] = None
     author: Optional[str] = None
     title: Optional[str] = None
