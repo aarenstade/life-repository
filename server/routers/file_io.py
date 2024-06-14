@@ -15,9 +15,9 @@ class FileItemModel(BaseModel):
     generic_file_type: str
     specific_file_type: str
     size_bytes: int
-    added_at: datetime
-    created_at: datetime
-    modified_at: datetime
+    added_at: str
+    created_at: str
+    modified_at: str
     is_directory: bool
     name: str
 
@@ -55,9 +55,15 @@ async def gather_file_details(full_path: str, item: str) -> dict:
         "generic_file_type": mime_type.split("/")[0] if mime_type else "unknown",
         "specific_file_type": mime_type if mime_type else "unknown",
         "size_bytes": file_info.st_size,
-        "added_at": datetime.datetime.fromtimestamp(file_info.st_ctime),
-        "created_at": datetime.datetime.fromtimestamp(file_info.st_ctime),
-        "modified_at": datetime.datetime.fromtimestamp(file_info.st_mtime),
+        "added_at": datetime.datetime.fromtimestamp(file_info.st_ctime).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "created_at": datetime.datetime.fromtimestamp(file_info.st_ctime).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "modified_at": datetime.datetime.fromtimestamp(file_info.st_mtime).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
     }
 
 

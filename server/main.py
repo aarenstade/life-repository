@@ -5,7 +5,6 @@ load_dotenv()
 import os
 import uvicorn
 import logging
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,41 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.file_io import router as file_io_router
 from routers.transcribe import router as transcribe_router
 from routers.tags import router as tags_router
-from lib.database.sqlite3 import SQLite3Adapter
 from config import load_config
 
 
-def initialize_database() -> SQLite3Adapter:
-    print("Initializing database")
-    database_path = config.get("sqlite_database_path")
-    schema_path = config.get("sqlite_database_schema_path")
-
-    if not database_path:
-        raise ValueError("Database path not set in configuration")
-
-    if not schema_path:
-        raise ValueError("Database schema path not set in configuration")
-
-    db = SQLite3Adapter(connection_string=database_path)
-    db.connect()
-
-    if not db.fetch_all("SELECT name FROM sqlite_master WHERE type='table'"):
-        db.initialize_schema(schema_path)
-
-    print("Database initialized")
-    return db
-
-
-@asynccontextmanager
-async def lifespan(application: FastAPI):
-    db = initialize_database()
-    application.state.db = db
-    yield
-    db.disconnect()
-
-
 def create_app():
-    app = FastAPI(lifespan=lifespan)
+    app = FastAPI()
 
     environment = os.getenv("ENVIRONMENT", "dev")  # Default to 'development' if not set
 
