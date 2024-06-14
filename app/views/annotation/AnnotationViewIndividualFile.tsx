@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
 import MultiStepChinView from "../../components/control/MultiStepChinView";
 import FileDisplay from "../../components/media/FileDisplay";
-import { FileAnnotation } from "../../types/annotation";
+import { FileAnnotation, Tag } from "../../types/annotation";
 import _ from "lodash";
+import TagAnnotationInput from "../../components/inputs/transcribe-inputs/TagAnnotationInput";
 
 interface IndividualFileAnnotationProps {
   file: FileAnnotation;
@@ -13,6 +14,10 @@ interface IndividualFileAnnotationProps {
 
 const IndividualFileAnnotation: FC<IndividualFileAnnotationProps> = ({ file, onUpdate }) => {
   const { height } = Dimensions.get("window");
+
+  const updateFileTags = (tags: Tag[]) => {
+    onUpdate({ ...file, tags });
+  };
 
   const updateFileDescription = (text: string) => {
     onUpdate({ ...file, description: text });
@@ -25,6 +30,7 @@ const IndividualFileAnnotation: FC<IndividualFileAnnotationProps> = ({ file, onU
     >
       <FileDisplay file_uri={file.uri} />
       <TranscribeTextInput multiline value={file.description} onChangeText={updateFileDescription} insetBottom={height * 0.12} />
+      <TagAnnotationInput tags={file.tags} onTagsChange={updateFileTags} />
     </ScrollView>
   );
 };
