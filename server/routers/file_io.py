@@ -126,29 +126,25 @@ async def get_file(path: str):
 
 @router.post("/upload-file/")
 async def upload_file(file: UploadFile = File(...)):
-    # Check file size
     file_size = len(await file.read())
     if file_size > MAX_FILE_UPLOAD_SIZE_BYTES:
         raise HTTPException(status_code=413, detail="File size exceeds limit of 10MB")
 
-    # Reset file pointer after reading for size
     await file.seek(0)
 
-    # Validate file type
     file_extension = file.filename.split(".")[-1]
     if file_extension not in ALLOWED_FILE_TYPES:
         raise HTTPException(status_code=400, detail="File type not allowed")
 
-    # Define secure file path (prevents directory traversal attacks)
     secure_filename = file.filename.replace("..", "").replace("/", "").replace("\\", "")
     file_path = os.path.join(DATA_DIR, secure_filename)
 
-    # Save file
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(await file.read(), buffer)
-
-    # Note: For production, consider scanning the file for malware here if it's to be executed or opened by the system.
-    # This can be done using third-party services or open-source tools. Ensure that the scanning process is secure and respects user privacy.
+        while True:
+            chunk = await file.read(1024)  # Read in chunks of 1024 bytes
+            if not chunk:
+                break
+            buffer.write(chunk)
 
     return JSONResponse(
         status_code=200,

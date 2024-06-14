@@ -26,6 +26,6 @@ export interface FileAnnotation {
   tags: Tag[];
   annotated_at: string;
   added_at: string;
-  status?: "idle" | "uploading" | "uploaded";
+  status?: "idle" | "error" | "uploading" | "uploaded";
   uploaded_at?: string;
 }
