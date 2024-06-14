@@ -13,11 +13,104 @@ import { useActiveAnnotation, useAnnotationDrafts } from "../state/annotations";
 import { AnnotationGroup, FileAnnotation } from "../types/annotation";
 import { utcNow } from "../utilities/general";
 import AnnotationDraftsList from "../components/annotation/AnnotationDraftsList";
-import shortid from "shortid";
+import fetchAPI from "../lib/api";
+import useConfig from "../hooks/useConfig";
+
+const useGroupUploader = () => {
+  const { group, updateFile } = useActiveAnnotation((store) => ({ group: store.group, updateFile: store.updateFile }));
+  const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const { api_url } = useConfig();
+
+  const uploadFile = async (file: FileAnnotation, apiUrl: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const fileUri = file.uri;
+      const fileName = fileUri.split("/").pop();
+      const fileType = fileName.split(".").pop();
+
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (!fileInfo.exists) {
+        throw new Error("File does not exist");
+      }
+
+      const fileSize = fileInfo.size || 0;
+      if (fileSize > 10000000) {
+        throw new Error("File size exceeds limit of 10MB");
+      }
+
+      const formData = new FormData();
+      formData.append("file", {
+        uri: fileUri,
+        name: fileName,
+        type: `image/${fileType}`,
+      } as any);
+
+      const endpoint = `${apiUrl.trim()}/paths/upload-file/`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.detail || "File upload failed");
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const writeFileData = async (file: FileAnnotation) => {
+    // Empty function to write file data
+  };
+
+  const handleFile = async (file: FileAnnotation) => {
+    updateFile({ ...file, status: "uploading" });
+    const result = await uploadFile(file, api_url);
+    if (result.success) {
+      await writeFileData(file);
+      updateFile({ ...file, status: "uploaded" });
+    } else {
+      updateFile({ ...file, status: "error" });
+      console.error(result.error);
+    }
+  };
+
+  const uploadGroup = async () => {
+    setIsUploading(true);
+
+    const batchSize = 10;
+    const { files } = group;
+
+    try {
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
+        const uploadPromises = batch.map((file) => handleFile(file));
+        await Promise.all(uploadPromises);
+      }
+      console.log("All files uploaded successfully");
+    } catch (error) {
+      console.error("Error uploading files:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return { isUploading, progress, uploadGroup };
+};
 
 const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
+  const { isUploading, progress, uploadGroup } = useGroupUploader();
   const steps = ["add-type", "select-files", "annotate-group", "annotate-individual", "review"];
 
+  const [activeFileUri, setActiveFileUri] = useState<string | null>(null);
   const [drafts, setDrafts] = useAnnotationDrafts((store) => [store.draftGroups, store.setDraftGroups]);
   const [flowType, setFlowType] = useActiveAnnotation((store) => [store.group ? store.group.flow_type : "individual-then-group", store.setFlowType]);
   const [step, setStep] = useActiveAnnotation((store) => [store.step, store.setStep]);
@@ -29,13 +122,28 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     store.removeFile,
   ]);
 
-  const [activeFileUri, setActiveFileUri] = useState<string | null>(null);
-
   useEffect(() => {
     if (!group) {
       setStep("add-type");
+      resetActiveAnnotation();
     }
   }, [group]);
+
+  const resetActiveAnnotation = () => {
+    setGroup({
+      group_id: "",
+      title: "",
+      description: "",
+      files: [],
+      tags: [],
+      created_at: utcNow(),
+      updated_at: utcNow(),
+      flow_type: flowType,
+    });
+    setFiles([]);
+    setStep("add-type");
+    setActiveFileUri(null);
+  };
 
   const groupHasDraft = drafts && drafts.find((draft) => draft.group_id === group.group_id);
 
@@ -54,6 +162,22 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       if (steps[currentStepIndex] == "annotate-group") return setStep("review");
     }
 
+    if (step === "review") {
+      Alert.alert("Confirm Upload", "Are you sure you want to start the upload of the group?", [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "OK",
+          onPress: () => {
+            console.log("STARTING UPLOAD OF GROUP");
+            uploadGroup();
+          },
+        },
+      ]);
+    }
+
     if (currentStepIndex < steps.length - 1) {
       setStep(steps[currentStepIndex + 1]);
     }
@@ -64,6 +188,12 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
     if (steps[currentStepIndex] == "select-files") {
       updateGroupDraft(group);
+      if (group.files.length > 0) {
+        promptSaveAsDraft();
+      } else {
+        resetState();
+        navigation.navigate("home");
+      }
     }
 
     if (flowType == "individual-then-group") {
@@ -77,44 +207,59 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   };
 
   const handleCancel = () => {
+    console.log("CANCELLING");
+
     if (flowType == "individual-then-group" && step == "annotate-individual") {
       setStep("select-files");
       return;
     }
 
-    updateGroupDraft(group);
-
-    if (group.files.length > 0 && !groupHasDraft) {
-      Alert.alert(
-        "Save as Draft",
-        "Do you want to save your changes as a draft?",
-        [
-          {
-            text: "Yes",
-            onPress: () => {
-              setDrafts([...(drafts || []), group]);
-              resetState();
-              navigation.navigate("home");
-            },
-          },
-          {
-            text: "No",
-            onPress: () => {
-              resetState();
-              navigation.navigate("home");
-            },
-          },
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-        ],
-        { cancelable: false }
-      );
+    if (group.files.length > 0) {
+      promptSaveAsDraft();
     } else {
       resetState();
       navigation.navigate("home");
     }
+  };
+
+  const insertDraft = () => {
+    const draftsCopy = [...drafts];
+    const draftIndex = draftsCopy.findIndex((draft) => draft.group_id === group.group_id);
+    if (draftIndex !== -1) {
+      draftsCopy[draftIndex] = group;
+      setDrafts(draftsCopy);
+    } else {
+      setDrafts([...draftsCopy, group]);
+    }
+  };
+
+  const promptSaveAsDraft = () => {
+    Alert.alert(
+      "Save as Draft",
+      "Do you want to save your changes as a draft?",
+      [
+        {
+          text: "Yes",
+          onPress: () => {
+            insertDraft();
+            resetState();
+            navigation.navigate("home");
+          },
+        },
+        {
+          text: "No",
+          onPress: () => {
+            resetState();
+            navigation.navigate("home");
+          },
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   const resetState = () => {
@@ -204,6 +349,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   if (step === "add-type") {
     const handleSetAddType = (type: "individual-then-group" | "group-then-individual") => {
+      resetActiveAnnotation();
       setFlowType(type);
       setStep("select-files");
     };
