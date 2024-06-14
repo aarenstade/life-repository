@@ -2,7 +2,7 @@ import { FC, useEffect, useState } from "react";
 import { Alert, ScrollView, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { AddFilesPageProps } from "../App";
 import * as FileSystem from "expo-file-system";
-import FilePreviewGrid from "../components/media/FilePreviewGrid";
+import FilePreviewGrid from "../components/annotation/FileAnnotationPreviewGrid";
 import MultiStepChinView from "../components/control/MultiStepChinView";
 import SelectImagesView from "../views/selection/SelectImagesView";
 import AnnotationViewFileGroup from "../views/annotation/AnnotationViewFileGroup";
@@ -299,10 +299,15 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
       <DismissKeyboardView>{view}</DismissKeyboardView>
       <ScrollView>
         {group.files && (
-          <FilePreviewGrid files_uris={group.files.map((file) => file.uri) || []} onFileClick={handleFileClick} onFileRemove={handleFileRemove} />
+          <FilePreviewGrid files={group.files || []} onFileClick={handleFileClick} onFileRemove={step != "review" ? handleFileRemove : undefined} />
         )}
       </ScrollView>
-      <MultiStepChinView onContinue={handleNextStep} onCancel={handleCancel} onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined} />
+      <MultiStepChinView
+        continueText={step == "review" ? "Upload" : "Continue"}
+        onContinue={handleNextStep}
+        onCancel={handleCancel}
+        onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined}
+      />
     </View>
   );
 };
@@ -342,10 +347,7 @@ const mainStyles = StyleSheet.create({
 });
 
 const reviewStyles = StyleSheet.create({
-  reviewContainer: {
-    flex: 1,
-    padding: 16,
-  },
+  reviewContainer: {},
 });
 
 export default AddFilesPage;

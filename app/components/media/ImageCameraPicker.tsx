@@ -4,17 +4,16 @@ import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import { Feather } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
-import FileGrid from "./FilePreviewGrid";
+import FileGrid from "../annotation/FileAnnotationPreviewGrid";
 
 interface ImageCameraPickerProps {
   images: string[];
   onImagesChanged?: (images: string[]) => void;
   onImageSelect?: (image: string) => void;
   selectMultiple?: boolean;
-  showImages?: boolean;
 }
 
-const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged, onImageSelect, selectMultiple, showImages = false }) => {
+const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged, onImageSelect, selectMultiple }) => {
   const requestCameraPermissions = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -131,7 +130,6 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
         <Feather name='camera' size={24} style={styles.icon} />
         <Text style={styles.buttonText}>Take Photo</Text>
       </TouchableOpacity>
-      {showImages && <FileGrid files_uris={images} />}
     </View>
   );
 };

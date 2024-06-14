@@ -1,5 +1,6 @@
 import React, { FC, useState, useEffect } from "react";
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, KeyboardAvoidingView } from "react-native";
+import { View, TextInput, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import Modal from "../../../components/Modal";
 import useConfig from "../../../hooks/useConfig";
 import fetchAPI from "../../../lib/api";
@@ -106,7 +107,7 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
           <View key={index} style={styles.tag}>
             <Text style={styles.tagText}>{tag.tag}</Text>
             <TouchableOpacity onPress={() => removeTag(index)} style={styles.tagCloseButton}>
-              <Text style={styles.tagCloseText}>×</Text>
+              <Feather name='x' size={18} color='gray' />
             </TouchableOpacity>
           </View>
         ))}
@@ -138,7 +139,7 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
 const styles = StyleSheet.create({
   container: {
     flexDirection: "column",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   tagsContainer: {
     flexDirection: "row",
@@ -158,13 +159,13 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   tagCloseButton: {
-    backgroundColor: "#a0a0a0",
     borderRadius: 10,
   },
   tagCloseText: {
     color: "#fff",
     fontSize: 16,
-    padding: 2,
+    width: 20,
+    height: 20,
   },
   editTagsButton: {
     marginTop: 10,

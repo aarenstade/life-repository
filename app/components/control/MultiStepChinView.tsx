@@ -2,24 +2,34 @@ import { FC } from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 
 interface MultiStepChinViewProps {
+  continueText?: string;
+  cancelText?: string;
+  backText?: string;
   onContinue: () => void;
   onCancel: () => void;
   onBack?: () => void;
 }
 
-const MultiStepChinView: FC<MultiStepChinViewProps> = ({ onContinue, onCancel, onBack }) => {
+const MultiStepChinView: FC<MultiStepChinViewProps> = ({
+  onContinue,
+  onCancel,
+  onBack,
+  continueText = "Continue",
+  cancelText = "Cancel",
+  backText = "Back",
+}) => {
   return (
     <View style={chinViewStyles.chinViewContainer}>
       <TouchableOpacity onPress={onCancel} style={[chinViewStyles.chinViewButton, chinViewStyles.cancelButton]}>
-        <Text style={chinViewStyles.chinViewButtonText}>Cancel</Text>
+        <Text style={chinViewStyles.chinViewButtonText}>{cancelText}</Text>
       </TouchableOpacity>
       {onBack && (
         <TouchableOpacity onPress={onBack} style={[chinViewStyles.chinViewButton, chinViewStyles.normalButton]}>
-          <Text style={chinViewStyles.chinViewButtonText}>Back</Text>
+          <Text style={chinViewStyles.chinViewButtonText}>{backText}</Text>
         </TouchableOpacity>
       )}
       <TouchableOpacity onPress={onContinue} style={[chinViewStyles.chinViewButton, chinViewStyles.normalButton]}>
-        <Text style={chinViewStyles.chinViewButtonText}>Continue</Text>
+        <Text style={chinViewStyles.chinViewButtonText}>{continueText}</Text>
       </TouchableOpacity>
     </View>
   );

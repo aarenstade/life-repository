@@ -1,7 +1,7 @@
 import { FC, useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
-import FilePreviewGrid from "../../components/media/FilePreviewGrid";
+import FilePreviewGrid from "../../components/annotation/FileAnnotationPreviewGrid";
 import TagAnnotationInput from "../../components/inputs/transcribe-inputs/TagAnnotationInput";
 import { useActiveAnnotation } from "../../state/annotations";
 import _ from "lodash";
@@ -15,8 +15,6 @@ interface AnnotationViewFileGroupProps {
 const AnnotationViewFileGroup: FC<AnnotationViewFileGroupProps> = ({ hideFilePreviewGrid, onFileClick, onFileRemove }) => {
   const [groupTags, setGroupTags] = useActiveAnnotation((store) => [store.group.tags, store.setGroupTags]);
   const [group, setGroup] = useActiveAnnotation((store) => [store.group, store.setGroup]);
-
-  const file_uris = useMemo(() => group.files.map((file) => file.uri) || [], [group.files]);
 
   return (
     <View style={groupViewStyles.annotateGroupContainer}>
@@ -33,7 +31,7 @@ const AnnotationViewFileGroup: FC<AnnotationViewFileGroupProps> = ({ hideFilePre
       <TagAnnotationInput tags={groupTags} onTagsChange={setGroupTags} />
       {!hideFilePreviewGrid && (
         <ScrollView style={groupViewStyles.scollViewContainer}>
-          <FilePreviewGrid files_uris={file_uris} onFileRemove={onFileRemove} onFileClick={onFileClick} />
+          <FilePreviewGrid files={group.files} onFileRemove={onFileRemove} onFileClick={onFileClick} />
         </ScrollView>
       )}
     </View>
