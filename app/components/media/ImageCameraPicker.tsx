@@ -3,6 +3,7 @@ import { View, Alert, TouchableOpacity, Text, StyleSheet } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import { Feather } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system";
 import FileGrid from "./FilePreviewGrid";
 
 interface ImageCameraPickerProps {
@@ -42,15 +43,7 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
       quality: 1,
     });
 
-    if (!result.canceled && result.assets) {
-      const newImages = result.assets.map((img) => img.uri);
-      if (selectMultiple && onImagesChanged) {
-        const allImages = Array.from(new Set([...images, ...newImages]));
-        onImagesChanged(allImages);
-      } else if (!selectMultiple && onImageSelect && newImages.length > 0) {
-        onImageSelect(newImages[0]);
-      }
-    }
+    await handleImageResult(result);
   };
 
   const takePhoto = async () => {
@@ -61,13 +54,46 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
       quality: 1,
     });
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
+    await handleImageResult(result);
+  };
+
+  const handleImageResult = async (result) => {
+    if (!result.canceled && result.assets) {
+      const imageUris = await Promise.all(
+        result.assets.map(async (img) => {
+          const permanentUri = await saveImagePermanently(img.uri);
+          return permanentUri;
+        })
+      );
+
       if (selectMultiple && onImagesChanged) {
-        onImagesChanged([...images, ...result.assets.map((img) => img.uri)]);
-      } else if (!selectMultiple && onImageSelect) {
-        onImageSelect(result.assets[0].uri);
+        const allImages = Array.from(new Set([...images, ...imageUris]));
+        onImagesChanged(allImages);
+      } else if (!selectMultiple && onImageSelect && imageUris.length > 0) {
+        onImageSelect(imageUris[0]);
       }
     }
+  };
+
+  const saveImagePermanently = async (tempUri: string) => {
+    const fileInfo = await FileSystem.getInfoAsync(tempUri);
+    console.log(fileInfo);
+    if (!fileInfo.exists) {
+      throw new Error("File does not exist");
+    }
+
+    const fileName = tempUri.split("/").pop();
+    const permanentUri = FileSystem.documentDirectory + fileName;
+
+    await FileSystem.copyAsync({
+      from: tempUri,
+      to: permanentUri,
+    });
+
+    console.log("tempUri", tempUri);
+    console.log("permanentUri", permanentUri);
+
+    return permanentUri;
   };
 
   const styles = StyleSheet.create({
