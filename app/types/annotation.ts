@@ -17,6 +17,7 @@ export interface AnnotationGroup extends BaseAnnotationGroup {
 export interface Tag {
   id?: string;
   tag: string;
+  featured?: boolean;
 }
 
 export interface FileAnnotation {
@@ -25,4 +26,6 @@ export interface FileAnnotation {
   tags: Tag[];
   annotated_at: string;
   added_at: string;
+  uploaded: boolean;
+  uploaded_at?: string;
 }
