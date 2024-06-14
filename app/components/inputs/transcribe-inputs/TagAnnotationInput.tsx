@@ -5,6 +5,7 @@ import useConfig from "../../../hooks/useConfig";
 import fetchAPI from "../../../lib/api";
 import { Tag } from "../../../types/annotation";
 import shortid from "shortid";
+import _ from "lodash";
 
 interface TagAnnotationInputProps {
   tags: Tag[];
@@ -32,6 +33,12 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const { api_url } = useConfig();
+
+  useEffect(() => {
+    if (!_.isEqual(initialTags, tags)) {
+      onTagsChange(tags);
+    }
+  }, [tags]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {

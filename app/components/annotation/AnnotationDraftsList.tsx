@@ -18,9 +18,9 @@ const AnnotationDraftsList: FC<AnnotationDraftsListProps> = ({ drafts, onDelete,
     <TouchableOpacity style={styles.draftItem} onPress={() => onClick(item.group_id)}>
       {item.files.length > 0 && <Image source={{ uri: item.files[0].uri }} style={styles.draftImage} />}
       <View style={styles.textContainer}>
-        <Text style={styles.draftTitle}>{item.title || "No Title"}</Text>
+        <Text style={styles.draftTitle}>{item.title ? (item.title.length > 60 ? `${item.title.substring(0, 60)}...` : item.title) : "No Title"}</Text>
         {item.description && (
-          <Text style={styles.draftDescription}>{item.description.length > 120 ? `${item.description.substring(0, 120)}...` : item.description}</Text>
+          <Text style={styles.draftDescription}>{item.description.length > 60 ? `${item.description.substring(0, 60)}...` : item.description}</Text>
         )}
         {item.created_at && <Text style={styles.draftDate}>Created: {formatTimestampDistanceToNow(item.created_at)}</Text>}
         {item.updated_at && <Text style={styles.draftDate}>Updated: {formatTimestampDistanceToNow(item.updated_at)}</Text>}
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     borderColor: "black",
     borderRadius: 5,
     position: "relative",
-    height: 100,
+    height: "auto",
   },
   textContainer: {
     marginLeft: 10,

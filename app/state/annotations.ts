@@ -38,16 +38,7 @@ interface ActiveAnnotationState {
 export const useActiveAnnotation = create<ActiveAnnotationState>()(
   persist(
     (set) => ({
-      group: {
-        group_id: shortid.generate(),
-        title: "Untitled Group",
-        description: "",
-        tags: [],
-        flow_type: "individual-then-group",
-        created_at: utcNow(),
-        updated_at: utcNow(),
-        files: [],
-      },
+      group: null,
       setGroup: (group) => set({ group }),
       setGroupTags: (tags) => set((state) => ({ group: { ...state.group, tags } })),
       setFlowType: (flowType) => set((state) => ({ group: { ...state.group, flow_type: flowType } })),

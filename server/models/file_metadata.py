@@ -1,12 +1,11 @@
 from typing import Optional
 from pydantic import BaseModel
-from datetime import datetime
 
 
 class FileMetadata(BaseModel):
     size: Optional[int] = None
-    created_at: Optional[datetime] = None
-    modified_at: Optional[datetime] = None
+    created_at: Optional[str] = None
+    modified_at: Optional[str] = None
 
 
 class ImageMetadata(FileMetadata):
