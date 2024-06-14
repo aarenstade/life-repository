@@ -21,7 +21,7 @@ const FileDisplay: FC<FileDisplayProps> = ({ file_uri }) => {
       case "png":
       case "gif":
         Image.getSize(file_uri, (width, height) => {
-          const style: StyleProp<ImageStyle> = { width: "100%", flexGrow: 1 };
+          const style: StyleProp<ImageStyle> = { height: "100%", minHeight: 200, maxHeight: 400, flexGrow: 1 };
           setFileContent(<Image source={{ uri: file_uri }} style={style} resizeMode='contain' />);
         });
         break;
