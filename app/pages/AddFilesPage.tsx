@@ -1,6 +1,7 @@
 import { FC, useEffect, useState } from "react";
 import { Alert, ScrollView, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { AddFilesPageProps } from "../App";
+import * as FileSystem from "expo-file-system";
 import FilePreviewGrid from "../components/media/FilePreviewGrid";
 import MultiStepChinView from "../components/control/MultiStepChinView";
 import SelectImagesView from "../views/selection/SelectImagesView";
@@ -31,18 +32,10 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   const [activeFileUri, setActiveFileUri] = useState<string | null>(null);
 
   useEffect(() => {
-    const defaultGroup: AnnotationGroup = {
-      group_id: shortid.generate(),
-      title: "Untitled Group",
-      description: "",
-      tags: [],
-      flow_type: "individual-then-group",
-      created_at: utcNow(),
-      updated_at: utcNow(),
-      files: [],
-    };
-    setGroup(defaultGroup);
-  }, []);
+    if (!group) {
+      setStep("add-type");
+    }
+  }, [group]);
 
   const groupHasDraft = drafts && drafts.find((draft) => draft.group_id === group.group_id);
 
@@ -136,14 +129,29 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     setActiveFileUri(group.files.find((file) => file.uri === uri)?.uri || null);
   };
 
-  const handleFileRemove = (uri: string) => removeFile(uri);
+  const handleFileRemove = async (uri: string) => {
+    try {
+      removeFile(uri);
+      await FileSystem.deleteAsync(uri);
+    } catch (error) {
+      console.error("Failed to delete the image:", error);
+    }
+  };
+
   const handleFilesChange = (updatedFiles: FileAnnotation[]) => setFiles(updatedFiles);
   const handleSingleFileChange = (updatedFile: FileAnnotation) => updateFile(updatedFile);
 
   const handleSelectMultipleFileUris = (newFileUris: string[]) => {
     const file_uris = group.files.map((file) => file.uri);
     const newUris = newFileUris.filter((uri) => !file_uris.includes(uri));
-    const newFiles: FileAnnotation[] = newUris.map((uri) => ({ uri, description: "", tags: [], annotated_at: null, added_at: utcNow() }));
+    const newFiles: FileAnnotation[] = newUris.map((uri) => ({
+      uri,
+      description: "",
+      tags: [],
+      annotated_at: null,
+      added_at: utcNow(),
+      uploaded: false,
+    }));
     const updatedFiles = [...group.files, ...newFiles].reduce((acc, file) => {
       acc[file.uri] = acc[file.uri] ? (new Date(acc[file.uri].added_at) > new Date(file.added_at) ? acc[file.uri] : file) : file;
       return acc;
@@ -152,7 +160,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   };
 
   const handleSelectSingleFileUri = (newFileUri: string) => {
-    const newFile = { uri: newFileUri, description: "", tags: [], annotated_at: null, added_at: utcNow() };
+    const newFile = { uri: newFileUri, description: "", tags: [], annotated_at: null, added_at: utcNow(), uploaded: false };
     const file_uris = group.files.map((file) => file.uri);
 
     if (!file_uris.includes(newFileUri)) {
