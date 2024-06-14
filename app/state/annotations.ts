@@ -2,8 +2,6 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AnnotationFlowType, AnnotationGroup, FileAnnotation, Tag } from "../types/annotation";
-import shortid from "shortid";
-import { utcNow } from "../utilities/general";
 
 interface AnnotationDraftsState {
   draftGroups: AnnotationGroup[];
@@ -33,6 +31,8 @@ interface ActiveAnnotationState {
   setFiles: (files: FileAnnotation[]) => void;
   updateFile: (file: FileAnnotation) => void;
   removeFile: (fileUri: string) => void;
+  status: "annotating" | "uploading" | "uploaded";
+  setStatus: (status: "annotating" | "uploading" | "uploaded") => void;
 }
 
 export const useActiveAnnotation = create<ActiveAnnotationState>()(
@@ -47,6 +47,8 @@ export const useActiveAnnotation = create<ActiveAnnotationState>()(
       removeFile: (fileUri) => set((state) => ({ group: { ...state.group, files: state.group.files.filter((file) => file.uri !== fileUri) } })),
       step: "add-type",
       setStep: (step) => set({ step }),
+      status: "annotating",
+      setStatus: (status) => set({ status }),
     }),
     {
       name: "active-annotation",
