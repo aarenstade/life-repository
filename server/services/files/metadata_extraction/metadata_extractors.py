@@ -2,7 +2,7 @@ import os
 from typing import Dict, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from models.files import FileType
+from models.files import File, FileType
 from models.file_metadata import FileMetadata
 
 from services.files.metadata_extraction.archive_metadata_extractor import (
@@ -23,6 +23,8 @@ from services.files.metadata_extraction.video_metadata_extractor import (
 
 from services.files.metadata_extraction.base import MetadataExtractor
 from services.files.directory_file_organizer import DirectoryFileOrganizer
+
+from utilities.general import generate_id
 
 
 class FileMetadataExtractor:
@@ -46,6 +48,10 @@ class FileMetadataExtractor:
             FileType.DOCUMENT: None,  # TODO: Add document metadata extractor
         }
 
+    def _get_file_type(self, file_path: str) -> FileType:
+        file_extension = file_path.split(".")[-1].lower()
+        return DirectoryFileOrganizer.get_file_type(file_extension)
+
     def extract_file_metadata(self, file_path: str) -> FileMetadata:
         file_extension = file_path.split(".")[-1].lower()
         file_type = DirectoryFileOrganizer.get_file_type(file_extension)
@@ -61,10 +67,25 @@ class FileMetadataExtractor:
             )
 
     def extract_files_metadata_concurrent(
-        self, file_paths: List[str], max_workers: int = 5
+        self,
+        file_paths: List[str],
+        max_workers: int = 5,
+        return_raw_metadata: bool = False,
     ) -> List[FileMetadata]:
         def extract(file_path: str) -> FileMetadata:
-            return self.extract_file_metadata(file_path)
+            file_type = self._get_file_type(file_path)
+            metadata = self.extract_file_metadata(file_path)
+            return (
+                metadata
+                if return_raw_metadata
+                else File(
+                    id=generate_id(),
+                    name=os.path.basename(file_path),
+                    type=file_type,
+                    path=file_path,
+                    metadata=metadata,
+                )
+            )
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_file = {
