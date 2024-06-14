@@ -1,34 +1,35 @@
-from fastapi import APIRouter, HTTPException, Request
+import os
+from fastapi import APIRouter, Request
 from typing import List
+
+from dbio.supabase import SupabaseDatabaseAdapter
 
 router = APIRouter()
 
 
 @router.get("/autocomplete", response_model=List[str])
 async def get_tag_annotations(request: Request, search: str):
-    print(request.app.state)
-    db = request.app.state.db
+    db = SupabaseDatabaseAdapter(
+        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
+    )
 
-    try:
-        tags = db.fetch_all(
-            "SELECT tag FROM tags WHERE tag LIKE :search_tag ORDER BY tag ASC LIMIT 10",
-            {"search_tag": f"%{search}%"},
-        )
-        if not tags:
-            return []
-        return [tag["tag"] for tag in tags]
-    finally:
-        db.disconnect()
+    results = (
+        db.client.from_("tags")
+        .select("tag")
+        .like("tag", f"%{search.lower()}%")
+        .limit(10)
+        .execute()
+    )
+
+    return [result["tag"] for result in results.data]
 
 
 @router.post("/insert", response_model=dict)
 async def insert_tag(request: Request):
+    db = SupabaseDatabaseAdapter(
+        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
+    )
+
     body = await request.json()
-    db = request.app.state.db
-    try:
-        db.insert("tags", {"tag": body["tag"]})
-        return {"message": "Tag inserted successfully."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        db.disconnect()
+    db.insert("tags", {"tag": body["tag"].lower()})
+    return {"message": "Tag inserted successfully."}
