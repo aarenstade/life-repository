@@ -21,6 +21,7 @@ export interface Tag {
 }
 
 export interface FileAnnotation {
+  file_id: string;
   uri: string;
   description: string;
   tags: Tag[];

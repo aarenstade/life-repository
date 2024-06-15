@@ -15,6 +15,7 @@ import { utcNow } from "../utilities/general";
 import AnnotationDraftsList from "../components/annotation/AnnotationDraftsList";
 import fetchAPI from "../lib/api";
 import useConfig from "../hooks/useConfig";
+import shortid from "shortid";
 
 const useGroupUploader = () => {
   const { group, updateFile } = useActiveAnnotation((store) => ({ group: store.group, updateFile: store.updateFile }));
@@ -89,6 +90,8 @@ const useGroupUploader = () => {
     const batchSize = 10;
     const { files } = group;
 
+    console.log(JSON.stringify(group, null, 2));
+
     try {
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
@@ -131,7 +134,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   const resetActiveAnnotation = () => {
     setGroup({
-      group_id: "",
+      group_id: shortid.generate(),
       title: "",
       description: "",
       files: [],
@@ -290,6 +293,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     const file_uris = group.files.map((file) => file.uri);
     const newUris = newFileUris.filter((uri) => !file_uris.includes(uri));
     const newFiles: FileAnnotation[] = newUris.map((uri) => ({
+      file_id: shortid.generate(),
       uri,
       description: "",
       tags: [],
@@ -305,7 +309,16 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   };
 
   const handleSelectSingleFileUri = (newFileUri: string) => {
-    const newFile = { uri: newFileUri, description: "", tags: [], annotated_at: null, added_at: utcNow(), uploaded: false };
+    const newFile = {
+      file_id: shortid.generate(),
+      uri: newFileUri,
+      description: "",
+      tags: [],
+      annotated_at: null,
+      added_at: utcNow(),
+      uploaded: false,
+    };
+
     const file_uris = group.files.map((file) => file.uri);
 
     if (!file_uris.includes(newFileUri)) {
