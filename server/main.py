@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.file_io import router as file_io_router
 from routers.transcribe import router as transcribe_router
 from routers.tags import router as tags_router
+from routers.annotate import router as annotate_router
 from config import load_config
 
 
@@ -34,6 +35,7 @@ def create_app():
     app.include_router(file_io_router, prefix="/paths")
     app.include_router(transcribe_router, prefix="/transcribe")
     app.include_router(tags_router, prefix="/tags")
+    app.include_router(annotate_router, prefix="/annotations")
 
     return app
 
