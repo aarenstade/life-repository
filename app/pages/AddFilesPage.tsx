@@ -11,7 +11,7 @@ import DismissKeyboardView from "../components/containers/DismissKeyboardView";
 import CardButton from "../components/CardButton";
 import { useActiveAnnotation, useAnnotationDrafts } from "../state/annotations";
 import { AnnotationGroup, FileAnnotation } from "../types/annotation";
-import { utcNow } from "../utilities/general";
+import { generate_id, utcNow } from "../utilities/general";
 import AnnotationDraftsList from "../components/annotation/AnnotationDraftsList";
 import fetchAPI from "../lib/api";
 import useConfig from "../hooks/useConfig";
@@ -23,7 +23,7 @@ const useGroupUploader = () => {
   const [progress, setProgress] = useState(0);
   const { api_url } = useConfig();
 
-  const uploadFile = async (file: FileAnnotation, apiUrl: string): Promise<{ success: boolean; error?: string }> => {
+  const uploadFile = async (file: FileAnnotation, apiUrl: string): Promise<{ success: boolean; data?: any; error?: string }> => {
     try {
       const fileUri = file.uri;
       const fileName = fileUri.split("/").pop();
@@ -62,25 +62,47 @@ const useGroupUploader = () => {
         throw new Error(responseData.detail || "File upload failed");
       }
 
-      return { success: true };
+      return { success: true, data: responseData };
     } catch (error) {
       return { success: false, error: error.message };
     }
   };
 
-  const writeFileData = async (file: FileAnnotation) => {
-    // Empty function to write file data
+  const writeFileData = async (file: FileAnnotation, path: string) => {
+    const data = { file, path };
+    const response = await fetchAPI(api_url, "annotations/insert/file", data, "POST");
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to write file data");
+    }
+
+    return response.data;
+  };
+
+  const writeGroupData = async (group: AnnotationGroup) => {
+    const response = await fetchAPI(api_url, "annotations/insert/group", group, "POST");
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to write group data");
+    }
+
+    return response.data;
   };
 
   const handleFile = async (file: FileAnnotation) => {
-    updateFile({ ...file, status: "uploading" });
-    const result = await uploadFile(file, api_url);
-    if (result.success) {
-      await writeFileData(file);
-      updateFile({ ...file, status: "uploaded" });
-    } else {
+    try {
+      updateFile({ ...file, status: "uploading" });
+      const result = await uploadFile(file, api_url);
+      if (result.success && result.data.path) {
+        await writeFileData(file, result.data.path);
+        updateFile({ ...file, status: "uploaded" });
+      } else {
+        updateFile({ ...file, status: "error" });
+        console.error(result.error);
+      }
+    } catch (error) {
       updateFile({ ...file, status: "error" });
-      console.error(result.error);
+      console.error("Error handling file:", error);
     }
   };
 
@@ -99,6 +121,7 @@ const useGroupUploader = () => {
         await Promise.all(uploadPromises);
       }
       console.log("All files uploaded successfully");
+      await writeGroupData(group);
     } catch (error) {
       console.error("Error uploading files:", error);
     } finally {
@@ -134,7 +157,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   const resetActiveAnnotation = () => {
     setGroup({
-      group_id: shortid.generate(),
+      group_id: generate_id(),
       title: "",
       description: "",
       files: [],
@@ -293,7 +316,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     const file_uris = group.files.map((file) => file.uri);
     const newUris = newFileUris.filter((uri) => !file_uris.includes(uri));
     const newFiles: FileAnnotation[] = newUris.map((uri) => ({
-      file_id: shortid.generate(),
+      file_id: generate_id(),
       uri,
       description: "",
       tags: [],
@@ -310,7 +333,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
 
   const handleSelectSingleFileUri = (newFileUri: string) => {
     const newFile = {
-      file_id: shortid.generate(),
+      file_id: generate_id(),
       uri: newFileUri,
       description: "",
       tags: [],
