@@ -3,9 +3,9 @@ import { View, StyleSheet } from "react-native";
 import ImageCameraPicker from "../../components/media/ImageCameraPicker";
 
 interface SelectImagesViewProps {
-  images: string[];
-  onSelectMultipleImages: (images: string[]) => void;
-  onSelectSingleImage: (image: string) => void;
+  images: { uri: string; metadata: any }[];
+  onSelectMultipleImages: (images: { uri: string; metadata: any }[]) => void;
+  onSelectSingleImage: (image: { uri: string; metadata: any }) => void;
   selectMultiple?: boolean;
 }
 

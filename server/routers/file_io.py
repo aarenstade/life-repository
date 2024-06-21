@@ -1,13 +1,24 @@
 import datetime
+import json
 import os
 import shutil
 from typing import List
 import mimetypes
 
-from fastapi import APIRouter, HTTPException, Request
-from fastapi import UploadFile, File, HTTPException
+from fastapi import (
+    Request,
+    APIRouter,
+    HTTPException,
+    UploadFile,
+    HTTPException,
+    Form,
+    File,
+)
+
 from fastapi.responses import JSONResponse
+
 from pydantic import BaseModel
+import subprocess
 
 
 # TODO remove this completely and utilize a partial type from tables
@@ -126,7 +137,7 @@ async def get_file(path: str):
 
 
 @router.post("/upload-file/")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), metadata: str = Form(...)):
     file_size = len(await file.read())
     if file_size > MAX_FILE_UPLOAD_SIZE_BYTES:
         raise HTTPException(status_code=413, detail="File size exceeds limit of 10MB")
@@ -147,6 +158,18 @@ async def upload_file(file: UploadFile = File(...)):
             if not chunk:
                 break
             buffer.write(chunk)
+
+    try:
+        metadata_dict = json.loads(metadata)
+        metadata_args = []
+        for key, value in metadata_dict.items():
+            if isinstance(value, list):
+                value = ",".join(map(str, value))
+            metadata_args.append(f"-{key}={value}")
+
+        subprocess.run(["exiftool", *metadata_args, file_path])
+    except (json.JSONDecodeError, subprocess.CalledProcessError) as e:
+        print("Error adding metadata:", e)
 
     return JSONResponse(
         status_code=200,

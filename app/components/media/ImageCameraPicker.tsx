@@ -4,12 +4,11 @@ import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import { Feather } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
-import FileGrid from "../annotation/FileAnnotationPreviewGrid";
 
 interface ImageCameraPickerProps {
-  images: string[];
-  onImagesChanged?: (images: string[]) => void;
-  onImageSelect?: (image: string) => void;
+  images: { uri: string; metadata: any }[];
+  onImagesChanged?: (images: { uri: string; metadata: any }[]) => void;
+  onImageSelect?: (image: { uri: string; metadata: any }) => void;
   selectMultiple?: boolean;
 }
 
@@ -40,6 +39,7 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: selectMultiple,
       quality: 1,
+      exif: true,
     });
 
     await handleImageResult(result);
@@ -51,6 +51,7 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
 
     const result = await ImagePicker.launchCameraAsync({
       quality: 1,
+      exif: true,
     });
 
     await handleImageResult(result);
@@ -61,7 +62,7 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
       const imageUris = await Promise.all(
         result.assets.map(async (img) => {
           const permanentUri = await saveImagePermanently(img.uri);
-          return permanentUri;
+          return { uri: permanentUri, metadata: img.exif };
         })
       );
 
@@ -88,9 +89,6 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
       from: tempUri,
       to: permanentUri,
     });
-
-    console.log("tempUri", tempUri);
-    console.log("permanentUri", permanentUri);
 
     return permanentUri;
   };

@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react";
-import { Alert, ScrollView, View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Alert, ScrollView, View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 import { AddFilesPageProps } from "../App";
 import * as FileSystem from "expo-file-system";
 import FilePreviewGrid from "../components/annotation/FileAnnotationPreviewGrid";
@@ -20,7 +20,8 @@ import shortid from "shortid";
 const useGroupUploader = () => {
   const { group, updateFile } = useActiveAnnotation((store) => ({ group: store.group, updateFile: store.updateFile }));
   const [isUploading, setIsUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [statusMessageStream, setStatusMessageStream] = useState<{ type: "INFO" | "SUCCESS" | "WARNING" | "ERROR"; text: string }[]>([]);
+  const [isSuccess, setIsSuccess] = useState(false);
   const { api_url } = useConfig();
 
   const uploadFile = async (file: FileAnnotation, apiUrl: string): Promise<{ success: boolean; data?: any; error?: string }> => {
@@ -45,6 +46,8 @@ const useGroupUploader = () => {
         name: fileName,
         type: `image/${fileType}`,
       } as any);
+
+      formData.append("metadata", JSON.stringify(file.metadata));
 
       const endpoint = `${apiUrl.trim()}/paths/upload-file/`;
 
@@ -92,17 +95,19 @@ const useGroupUploader = () => {
   const handleFile = async (file: FileAnnotation) => {
     try {
       updateFile({ ...file, status: "uploading" });
+      setStatusMessageStream((prev) => [...prev, { type: "INFO", text: `Uploading file ${file.uri}` }]);
       const result = await uploadFile(file, api_url);
       if (result.success && result.data.path) {
         await writeFileData(file, result.data.path);
         updateFile({ ...file, status: "uploaded" });
+        setStatusMessageStream((prev) => [...prev, { type: "SUCCESS", text: `File ${file.uri} uploaded` }]);
       } else {
         updateFile({ ...file, status: "error" });
-        console.error(result.error);
+        setStatusMessageStream((prev) => [...prev, { type: "ERROR", text: `File ${file.uri} upload failed: ${result.error}` }]);
       }
     } catch (error) {
       updateFile({ ...file, status: "error" });
-      console.error("Error handling file:", error);
+      setStatusMessageStream((prev) => [...prev, { type: "ERROR", text: `File ${file.uri} upload failed: ${error.message}` }]);
     }
   };
 
@@ -110,30 +115,44 @@ const useGroupUploader = () => {
     setIsUploading(true);
 
     const batchSize = 10;
-    const { files } = group;
+    let { files } = group;
 
-    console.log(JSON.stringify(group, null, 2));
+    setStatusMessageStream([]);
+
+    const filesToUpload = files.filter((file) => file.status != "uploaded");
+    if (filesToUpload.length == 0) {
+      setIsSuccess(true);
+      return;
+    }
+
+    setStatusMessageStream((prev) => [...prev, { type: "INFO", text: `Group contains ${files.length} files` }]);
+    setStatusMessageStream((prev) => [...prev, { type: "INFO", text: `Uploading ${filesToUpload.length} files` }]);
 
     try {
-      for (let i = 0; i < files.length; i += batchSize) {
+      for (let i = 0; i < filesToUpload.length; i += batchSize) {
+        setStatusMessageStream((prev) => [
+          ...prev,
+          { type: "INFO", text: `Uploading batch ${i / batchSize + 1} of ${Math.ceil(filesToUpload.length / batchSize)}` },
+        ]);
         const batch = files.slice(i, i + batchSize);
         const uploadPromises = batch.map((file) => handleFile(file));
         await Promise.all(uploadPromises);
       }
-      console.log("All files uploaded successfully");
+      setStatusMessageStream((prev) => [...prev, { type: "SUCCESS", text: "All files uploaded successfully" }]);
       await writeGroupData(group);
+      setIsSuccess(true);
     } catch (error) {
-      console.error("Error uploading files:", error);
+      setStatusMessageStream((prev) => [...prev, { type: "ERROR", text: `Error uploading files: ${error.message}` }]);
     } finally {
       setIsUploading(false);
     }
   };
 
-  return { isUploading, progress, uploadGroup };
+  return { isUploading, isSuccess, uploadGroup, statusMessageStream };
 };
 
 const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
-  const { isUploading, progress, uploadGroup } = useGroupUploader();
+  const { isUploading, isSuccess, uploadGroup, statusMessageStream } = useGroupUploader();
   const steps = ["add-type", "select-files", "annotate-group", "annotate-individual", "review"];
 
   const [activeFileUri, setActiveFileUri] = useState<string | null>(null);
@@ -312,17 +331,18 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   const handleFilesChange = (updatedFiles: FileAnnotation[]) => setFiles(updatedFiles);
   const handleSingleFileChange = (updatedFile: FileAnnotation) => updateFile(updatedFile);
 
-  const handleSelectMultipleFileUris = (newFileUris: string[]) => {
+  const handleSelectMultipleFileUris = (data: { uri: string; metadata: any }[]) => {
     const file_uris = group.files.map((file) => file.uri);
-    const newUris = newFileUris.filter((uri) => !file_uris.includes(uri));
-    const newFiles: FileAnnotation[] = newUris.map((uri) => ({
+    const newUris = data.filter((file) => !file_uris.includes(file.uri));
+    const newFiles: FileAnnotation[] = newUris.map((file) => ({
       file_id: generate_id(),
-      uri,
+      uri: file.uri,
       description: "",
       tags: [],
       annotated_at: null,
       added_at: utcNow(),
       uploaded: false,
+      metadata: data.find((f) => file.uri === f.uri)?.metadata,
     }));
     const updatedFiles = [...group.files, ...newFiles].reduce((acc, file) => {
       acc[file.uri] = acc[file.uri] ? (new Date(acc[file.uri].added_at) > new Date(file.added_at) ? acc[file.uri] : file) : file;
@@ -331,20 +351,21 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     setFiles(Object.values(updatedFiles).sort((a, b) => new Date(a.added_at).getTime() - new Date(b.added_at).getTime()));
   };
 
-  const handleSelectSingleFileUri = (newFileUri: string) => {
+  const handleSelectSingleFileUri = (data: { uri: string; metadata: any }) => {
     const newFile = {
       file_id: generate_id(),
-      uri: newFileUri,
+      uri: data.uri,
       description: "",
       tags: [],
       annotated_at: null,
       added_at: utcNow(),
       uploaded: false,
+      metadata: data.metadata,
     };
 
     const file_uris = group.files.map((file) => file.uri);
 
-    if (!file_uris.includes(newFileUri)) {
+    if (!file_uris.includes(newFile.uri)) {
       setFiles([...group.files, newFile]);
     }
 
@@ -447,7 +468,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
   if (step === "select-files") {
     view = (
       <SelectImagesView
-        images={group.files.map((file) => file.uri) || []}
+        images={group.files.map((file) => ({ uri: file.uri, metadata: file.metadata })) || []}
         onSelectSingleImage={handleSelectSingleFileUri}
         onSelectMultipleImages={handleSelectMultipleFileUris}
         selectMultiple={flowType == "group-then-individual"}
@@ -484,12 +505,53 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
           <FilePreviewGrid files={group.files || []} onFileClick={handleFileClick} onFileRemove={step != "review" ? handleFileRemove : undefined} />
         )}
       </ScrollView>
-      <MultiStepChinView
-        continueText={step == "review" ? "Upload" : "Continue"}
-        onContinue={handleNextStep}
-        onCancel={handleCancel}
-        onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined}
-      />
+
+      {!isUploading && !isSuccess && (
+        <MultiStepChinView
+          continueText={step == "review" ? "Upload" : "Continue"}
+          onContinue={handleNextStep}
+          onCancel={handleCancel}
+          onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined}
+        />
+      )}
+
+      {isUploading && !isSuccess && (
+        <View style={{ flex: 1 }}>
+          <FlatList
+            data={statusMessageStream}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <View
+                style={{
+                  padding: 8,
+                  backgroundColor:
+                    item.type === "INFO" ? "#17a2b8" : item.type === "SUCCESS" ? "#28a745" : item.type === "WARNING" ? "#ffc107" : "#dc3545",
+                  marginVertical: 4,
+                  borderRadius: 4,
+                }}
+              >
+                <Text style={{ color: "#fff" }}>{item.text}</Text>
+              </View>
+            )}
+          />
+        </View>
+      )}
+      {isSuccess && (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ fontSize: 24, fontWeight: "bold", color: "#ffffff", backgroundColor: "#28a745", padding: 8, borderRadius: 4 }}>
+            Uploaded!
+          </Text>
+          <TouchableOpacity
+            style={{ marginTop: 16, padding: 12, backgroundColor: "#007bff", borderRadius: 4 }}
+            onPress={() => {
+              resetActiveAnnotation();
+              navigation.navigate("add_files");
+            }}
+          >
+            <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 18 }}>Done</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };

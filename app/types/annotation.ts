@@ -29,4 +29,5 @@ export interface FileAnnotation {
   added_at: string;
   status?: "idle" | "error" | "uploading" | "uploaded";
   uploaded_at?: string;
+  metadata?: any;
 }
