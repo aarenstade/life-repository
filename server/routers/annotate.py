@@ -71,6 +71,12 @@ async def insert_group_annotation(request: Request):
 
     db.insert("groups", group_data)
 
+    file_ids = [file["file_id"] for file in body.get("files", [])]
+
+    for file_id in file_ids:
+        group_file_data = {"group_id": group_id, "file_id": file_id}
+        db.insert("file_groups", group_file_data)
+
     for tag in tags:
         group_tag_data = {"group_id": group_id, "tag_id": tag["id"]}
         db.insert("group_tags", group_tag_data)
