@@ -5,6 +5,7 @@ ROOT_PATH = os.path.join(os.path.expanduser("~"), "life-repository")
 CONFIG_PATH = os.path.join(ROOT_PATH, "config.json")
 TMP_DIR = os.path.join(ROOT_PATH, "data", "tmp")  # TODO get from global config
 DATA_DIR = os.path.join(ROOT_PATH, "data")  # TODO get from global config
+ANNOTATED_FILES_DIR = os.path.join(DATA_DIR, "annotation-app")
 
 
 def load_config():

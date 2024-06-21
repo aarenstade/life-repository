@@ -7,7 +7,7 @@ from dbio.supabase import SupabaseDatabaseAdapter
 router = APIRouter()
 
 
-@router.get("/autocomplete", response_model=List[str])
+@router.get("/autocomplete", response_model=List[dict])
 async def get_tag_annotations(request: Request, search: str):
     db = SupabaseDatabaseAdapter(
         url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
@@ -15,13 +15,13 @@ async def get_tag_annotations(request: Request, search: str):
 
     results = (
         db.client.from_("tags")
-        .select("tag")
+        .select("*")
         .like("tag", f"%{search.lower()}%")
         .limit(10)
         .execute()
     )
 
-    return [result["tag"] for result in results.data]
+    return [result for result in results.data]
 
 
 @router.post("/insert", response_model=dict)
@@ -31,5 +31,5 @@ async def insert_tag(request: Request):
     )
 
     body = await request.json()
-    db.insert("tags", {"tag": body["tag"].lower()})
-    return {"message": "Tag inserted successfully."}
+    response = db.insert("tags", {"tag": body["tag"].lower()})
+    return response[0] if response else None

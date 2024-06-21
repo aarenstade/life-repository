@@ -23,6 +23,7 @@ class FileItemModel(BaseModel):
 
 
 from config import (
+    ANNOTATED_FILES_DIR,
     DATA_DIR,
     IMAGE_FILE_TYPES,
     MAX_FILE_UPLOAD_SIZE_BYTES,
@@ -137,7 +138,8 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File type not allowed")
 
     secure_filename = file.filename.replace("..", "").replace("/", "").replace("\\", "")
-    file_path = os.path.join(DATA_DIR, secure_filename)
+    file_path = os.path.join(ANNOTATED_FILES_DIR, secure_filename)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     with open(file_path, "wb") as buffer:
         while True:
@@ -148,7 +150,11 @@ async def upload_file(file: UploadFile = File(...)):
 
     return JSONResponse(
         status_code=200,
-        content={"message": "File uploaded successfully", "filename": secure_filename},
+        content={
+            "message": "File uploaded successfully",
+            "filename": secure_filename,
+            "path": file_path,
+        },
     )
 
 
