@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from "react-native";
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
 import MultiStepChinView from "../../components/control/MultiStepChinView";
@@ -72,7 +72,9 @@ const AnnotationViewIndividualFile: FC<AnnotationViewIndividualFileProps> = ({ f
     onChange(annotateMultiple ? updatedFiles : updatedFile);
   };
 
-  const currentFile = files.find((file) => file.uri === currentFileId);
+  const currentFile = useMemo(() => {
+    return files && files.length > 0 ? files?.find((file) => file.uri === currentFileId) : undefined;
+  }, [currentFileId, files]);
 
   return (
     <View style={individualViewStyles.annotateIndividualContainer}>

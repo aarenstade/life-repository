@@ -1,10 +1,15 @@
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { DATETIME_FORMAT } from "../config/general";
+import uuid from "react-native-uuid";
 
 export const utcNow = (): string => {
   const now = new Date();
   const utcDate = new Date(now.toUTCString().substring(0, 25));
   return format(utcDate, DATETIME_FORMAT);
+};
+
+export const generate_id = (): string => {
+  return uuid.v4().toString();
 };
 
 export const formatTimestampDistanceToNow = (timestamp: string): string => {
