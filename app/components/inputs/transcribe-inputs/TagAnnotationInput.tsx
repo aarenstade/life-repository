@@ -31,7 +31,7 @@ const AutocompleteList: FC<AutocompleteListProps> = ({ suggestions, onSelect }) 
 const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, onTagsChange }) => {
   const [tags, setTags] = useState<Tag[]>(initialTags || []);
   const [inputValue, setInputValue] = useState("");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Tag[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const { api_url } = useConfig();
 
@@ -62,21 +62,27 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
     return () => clearTimeout(delayDebounce);
   }, [inputValue, api_url]);
 
-  const insertTag = async (tag: string) => {
+  const insertTag = async (tag: string): Promise<Tag | null> => {
     try {
       const res = await fetchAPI(api_url, `/tags/insert`, { tag }, "POST");
-      console.log(JSON.stringify(res));
+      if (res.success && res.data) {
+        return res.data;
+      } else {
+        console.error(res.message || "Failed to insert tag");
+        return null;
+      }
     } catch (error) {
       console.error(error);
+      return null;
     }
   };
 
   const handleInputChange = (text: string) => {
     const lastChar = text.charAt(text.length - 1);
     if (lastChar === ",") {
-      const newTag = { id: shortid.generate(), tag: text.slice(0, -1).trim() };
-      if (newTag && !tags.includes(newTag)) {
-        setTags([...tags, newTag]);
+      const newTag = text.slice(0, -1).trim();
+      if (newTag && !tags.some((t) => t.tag === newTag)) {
+        addNewTag(newTag);
       }
       setInputValue("");
       setSuggestions([]);
@@ -85,13 +91,27 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
     }
   };
 
-  const addTag = async (tag: string) => {
+  const setUniqueTags = (newTags: Tag[]) => {
+    const uniqueTags = _.uniqBy([...tags, ...newTags], "tag");
+    setTags(uniqueTags);
+  };
+
+  const addNewTag = async (tag: string) => {
     if (tag && !tags.some((t) => t.tag === tag)) {
-      setTags([...tags, { id: shortid.generate(), tag }]);
+      const insertedTag = await insertTag(tag);
+      if (insertedTag) {
+        setUniqueTags([insertedTag]);
+      }
     }
     setInputValue("");
     setSuggestions([]);
-    await insertTag(tag);
+  };
+
+  const addTagFromSuggestion = (suggestion: string) => {
+    const tag = suggestions.find((t) => t.tag === suggestion);
+    if (tag) {
+      setUniqueTags([tag]);
+    }
   };
 
   const removeTag = (index: number) => {
@@ -99,7 +119,6 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
   };
 
   const toggleModal = () => setModalVisible(!modalVisible);
-
   return (
     <View style={styles.container}>
       <View style={styles.tagsContainer}>
@@ -125,12 +144,12 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
             placeholderTextColor={"gray"}
           />
           {inputValue && (
-            <TouchableOpacity onPress={() => addTag(inputValue)} style={styles.addButton}>
+            <TouchableOpacity onPress={() => addNewTag(inputValue)} style={styles.addButton}>
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
           )}
         </View>
-        {suggestions.length > 0 && <AutocompleteList suggestions={suggestions} onSelect={addTag} />}
+        {suggestions.length > 0 && <AutocompleteList suggestions={suggestions.map((t) => t.tag)} onSelect={addTagFromSuggestion} />}
       </Modal>
     </View>
   );
