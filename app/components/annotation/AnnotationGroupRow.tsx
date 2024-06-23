@@ -3,6 +3,7 @@ import { AnnotationGroup } from "../../types/annotation";
 import { TouchableOpacity, Image, View, Text, StyleSheet } from "react-native";
 import { formatTimestampDistanceToNow } from "../../utilities/general";
 import { AntDesign } from "@expo/vector-icons";
+import FileDisplay from "../media/FileDisplay";
 
 interface AnnotationGroupRowProps {
   group: AnnotationGroup;
@@ -12,7 +13,7 @@ interface AnnotationGroupRowProps {
 
 const AnnotationGroupRow: FC<AnnotationGroupRowProps> = ({ group, onDelete, onClick }) => (
   <TouchableOpacity style={styles.annotationGroupRow} onPress={() => onClick(group.group_id)}>
-    {group.files.length > 0 && <Image source={{ uri: group.files[0].uri }} style={styles.annotationGroupImage} />}
+    {group.files.length > 0 && <FileDisplay uri={group.files[0].uri} style={styles.annotationGroupImage} />}
     <View style={styles.annotationGroupTextContainer}>
       <Text style={styles.annotationGroupTitle}>
         {group.title ? (group.title.length > 60 ? `${group.title.substring(0, 60)}...` : group.title) : "No Title"}
