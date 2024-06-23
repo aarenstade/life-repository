@@ -11,8 +11,10 @@ import LoadingIndicator from "./components/LoadingIndicator";
 import HomePage from "./pages/HomePage";
 import ConfigPage from "./pages/ConfigPage";
 import FileSystemPage from "./pages/FileSystemPage";
-import AddFilesPage from "./pages/AddFilesPage";
-import TestingPage from "./pages/TestingPage";
+
+import CreateAnnotationGroupPage from "./pages/annotation/CreateAnnotationGroupPage";
+import SavedAnnotationGroupsPage from "./pages/annotation/SavedAnnotationGroupsPage";
+import DraftAnnotationGroupsPage from "./pages/annotation/DraftAnnotationGroupsPage";
 
 const Stack = createNativeStackNavigator();
 
@@ -20,15 +22,17 @@ export type PageParams = {
   home: undefined;
   settings: undefined;
   file_system: undefined;
-  add_files: undefined;
-  testing: undefined;
+  create_annotation_group: undefined;
+  saved_annotation_groups: undefined;
+  draft_annotation_groups: undefined;
 };
 
 export type HomePageProps = NativeStackScreenProps<PageParams, "home">;
 export type SettingsPageProps = NativeStackScreenProps<PageParams, "settings">;
 export type FileSystemPageProps = NativeStackScreenProps<PageParams, "file_system">;
-export type AddFilesPageProps = NativeStackScreenProps<PageParams, "add_files">;
-export type TestingPageProps = NativeStackScreenProps<PageParams, "testing">;
+export type CreateAnnotationGroupPageProps = NativeStackScreenProps<PageParams, "create_annotation_group">;
+export type SavedAnnotationGroupsPageProps = NativeStackScreenProps<PageParams, "saved_annotation_groups">;
+export type DraftAnnotationGroupsPageProps = NativeStackScreenProps<PageParams, "draft_annotation_groups">;
 
 export default function App() {
   const config = useConfig();
@@ -71,8 +75,9 @@ export default function App() {
         <Stack.Screen name='home' component={HomePage} />
         <Stack.Screen name='settings' component={ConfigPage} />
         <Stack.Screen name='file_system' component={FileSystemPage} />
-        <Stack.Screen name='add_files' component={AddFilesPage} options={{ headerBackVisible: false }} />
-        <Stack.Screen name='testing' component={TestingPage} />
+        <Stack.Screen name='create_annotation_group' component={CreateAnnotationGroupPage} options={{ headerBackVisible: false }} />
+        <Stack.Screen name='saved_annotation_groups' component={SavedAnnotationGroupsPage} />
+        <Stack.Screen name='draft_annotation_groups' component={DraftAnnotationGroupsPage} />
       </Stack.Navigator>
     </NavigationContainer>
   );

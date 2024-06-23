@@ -1,21 +1,20 @@
 import { FC, useEffect, useState } from "react";
 import { Alert, ScrollView, View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
-import { AddFilesPageProps } from "../App";
 import * as FileSystem from "expo-file-system";
-import FilePreviewGrid from "../components/annotation/FileAnnotationPreviewGrid";
-import MultiStepChinView from "../components/control/MultiStepChinView";
-import SelectImagesView from "../views/selection/SelectImagesView";
-import AnnotationViewFileGroup from "../views/annotation/AnnotationViewFileGroup";
-import AnnotationViewIndividualFile from "../views/annotation/AnnotationViewIndividualFile";
-import DismissKeyboardView from "../components/containers/DismissKeyboardView";
-import CardButton from "../components/CardButton";
-import { useActiveAnnotation, useAnnotationDrafts } from "../state/annotations";
-import { AnnotationGroup, FileAnnotation } from "../types/annotation";
-import { generate_id, utcNow } from "../utilities/general";
-import AnnotationDraftsList from "../components/annotation/AnnotationDraftsList";
-import useGroupUploader from "../hooks/useGroupUploader";
+import FilePreviewGrid from "../../components/annotation/FileAnnotationPreviewGrid";
+import MultiStepChinView from "../../components/control/MultiStepChinView";
+import SelectImagesView from "../../views/selection/SelectImagesView";
+import AnnotationViewFileGroup from "../../views/annotation/AnnotationViewFileGroup";
+import AnnotationViewIndividualFile from "../../views/annotation/AnnotationViewIndividualFile";
+import DismissKeyboardView from "../../components/containers/DismissKeyboardView";
+import CardButton from "../../components/CardButton";
+import { useActiveAnnotation, useAnnotationDrafts } from "../../state/annotations";
+import { AnnotationGroup, FileAnnotation } from "../../types/annotation";
+import { generate_id, utcNow } from "../../utilities/general";
+import useGroupUploader from "../../hooks/useGroupUploader";
+import { CreateAnnotationGroupPageProps } from "../../App";
 
-const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
+const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigation }) => {
   const { isUploading, isSuccess, uploadGroup, statusMessageStream } = useGroupUploader();
   const steps = ["add-type", "select-files", "annotate-group", "annotate-individual", "review"];
 
@@ -256,16 +255,6 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
     }
   };
 
-  const handleDeleteDraft = (groupId: string) => {
-    Alert.alert("Confirm Delete", "Are you sure you want to delete this draft?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      { text: "OK", onPress: () => setDrafts(drafts.filter((draft) => draft.group_id !== groupId)) },
-    ]);
-  };
-
   let view;
 
   if (step === "add-type") {
@@ -294,13 +283,6 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
             icon={undefined}
           />
         </View>
-        <View style={{ height: 1, backgroundColor: "#e0e0e0", marginVertical: 20 }}></View>
-        {drafts && drafts.length > 0 && (
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 20 }}>Draft Groups</Text>
-            <AnnotationDraftsList drafts={drafts} onDelete={handleDeleteDraft} onClick={handleEnterDraft} />
-          </View>
-        )}
         <TouchableOpacity
           onPress={handleCancel}
           style={{
@@ -409,7 +391,7 @@ const AddFilesPage: FC<AddFilesPageProps> = ({ navigation }) => {
             style={{ marginTop: 16, padding: 12, backgroundColor: "#007bff", borderRadius: 4 }}
             onPress={() => {
               resetActiveAnnotation();
-              navigation.navigate("add_files");
+              navigation.navigate("saved_annotation_groups");
             }}
           >
             <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 18 }}>Done</Text>
@@ -458,4 +440,4 @@ const reviewStyles = StyleSheet.create({
   reviewContainer: {},
 });
 
-export default AddFilesPage;
+export default CreateAnnotationGroupPage;
