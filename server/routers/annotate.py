@@ -6,6 +6,88 @@ from dbio.supabase import SupabaseDatabaseAdapter
 
 router = APIRouter()
 
+"""
+
+Read Functions
+
+"""
+
+
+@router.get("/group/{group_id}", response_model=dict)
+async def get_group_annotation(group_id: str):
+    db = SupabaseDatabaseAdapter(
+        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
+    )
+
+    group = db.select("groups", "*", {"id": group_id})
+    group = group[0] if group else None
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    group_tags = db.select("group_tags", "*", {"group_id": group_id})
+    tags = [tag["tag_id"] for tag in group_tags]
+
+    files = db.select("file_groups", "*", {"group_id": group_id})
+    file_ids = [file["file_id"] for file in files]
+
+    file_annotations = []
+    for file_id in file_ids:
+        file = db.select("files", "*", {"id": file_id})
+        file_description = db.select("file_descriptions", "*", {"file_id": file_id})
+        file_tags = db.select("file_tags", "*", {"file_id": file_id})
+        tags = [tag["tag_id"] for tag in file_tags]
+
+        file = file[0] if file else None
+        file_description = file_description[0] if file_description else None
+
+        if not file:
+            continue
+
+        file_annotations.append(
+            {
+                "file_id": file_id,
+                "uri": file.get("path"),
+                "description": file_description.get("manual_description"),
+                "tags": tags,
+                "annotated_at": file_description.get("created_at"),
+                "added_at": file.get("created_at"),
+                "status": "uploaded",
+                "uploaded_at": file.get("created_at"),
+                "metadata": file.get("metadata"),
+            }
+        )
+    group_annotation = {
+        "group_id": group_id,
+        "title": group.get("title"),
+        "description": group.get("description"),
+        "tags": tags,
+        "files": file_annotations,
+        "created_at": group.get("created_at"),
+        "updated_at": group.get("updated_at"),
+    }
+
+    return group_annotation
+
+
+@router.get("/groups/ids", response_model=list)
+async def get_all_group_ids():
+    db = SupabaseDatabaseAdapter(
+        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
+    )
+
+    groups = db.select("groups", "*")
+    group_ids = [group["id"] for group in groups]
+
+    return group_ids
+
+
+"""
+
+Write Functions
+
+"""
+
 
 @router.post("/insert/file", response_model=dict)
 async def insert_file_annotation(request: Request):
@@ -14,7 +96,6 @@ async def insert_file_annotation(request: Request):
     )
 
     body = await request.json()
-    print(body)
     file, path = body["file"], body["path"]
 
     if not file or not path:
@@ -58,7 +139,6 @@ async def insert_group_annotation(request: Request):
     )
 
     body = await request.json()
-    print(body)
     group_id = body["group_id"]
     title, description = body["title"], body["description"]
     tags = body["tags"]
@@ -71,15 +151,30 @@ async def insert_group_annotation(request: Request):
 
     db.insert("groups", group_data)
 
-    file_ids = [file["file_id"] for file in body.get("files", [])]
-
-    for file_id in file_ids:
-        group_file_data = {"group_id": group_id, "file_id": file_id}
-        db.insert("file_groups", group_file_data)
-
     for tag in tags:
         group_tag_data = {"group_id": group_id, "tag_id": tag["id"]}
         db.insert("group_tags", group_tag_data)
 
     print("Group inserted successfully")
     return {"message": "Group inserted successfully"}
+
+
+@router.post("/insert/file_groups", response_model=dict)
+async def insert_file_groups(request: Request):
+    db = SupabaseDatabaseAdapter(
+        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
+    )
+
+    body = await request.json()
+
+    group_id = body["group_id"]
+    file_ids = [file["file_id"] for file in body.get("files", [])]
+
+    for file_id in file_ids:
+        try:
+            group_file_data = {"group_id": group_id, "file_id": file_id}
+            db.insert("file_groups", group_file_data)
+        except Exception as e:
+            print(f"Failed to insert file group data for file_id {file_id}: {e}")
+
+    return {"message": "File groups inserted successfully"}
