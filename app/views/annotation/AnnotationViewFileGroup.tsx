@@ -1,4 +1,4 @@
-import { FC, useMemo } from "react";
+import { FC } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import TranscribeTextInput from "../../components/inputs/transcribe-inputs/TranscribeTextInput";
 import FilePreviewGrid from "../../components/annotation/FileAnnotationPreviewGrid";
@@ -25,7 +25,6 @@ const AnnotationViewFileGroup: FC<AnnotationViewFileGroupProps> = ({ hideFilePre
         onChangeText={(text) => setGroup({ ...group, description: text })}
         placeholder='Enter description'
         multiline
-        d
         noFullScreen
       />
       <TagAnnotationInput tags={groupTags} onTagsChange={setGroupTags} />

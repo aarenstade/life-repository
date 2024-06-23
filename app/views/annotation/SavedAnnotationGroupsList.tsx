@@ -44,12 +44,9 @@ const SavedAnnotationGroupsList: FC = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Saved Annotation Groups</Text>
-      <ScrollView style={styles.scrollView}>
-        {data && data.map((groupId: string) => <SavedAnnotationGroupListItem key={groupId} groupId={groupId} />)}
-      </ScrollView>
-    </View>
+    <ScrollView style={styles.scrollView}>
+      {data && data.map((groupId: string) => <SavedAnnotationGroupListItem key={groupId} groupId={groupId} />)}
+    </ScrollView>
   );
 };
 

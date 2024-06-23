@@ -15,7 +15,7 @@ from fastapi import (
     File,
 )
 
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from pydantic import BaseModel
 import subprocess
@@ -128,12 +128,9 @@ async def list_files_recursive(request: Request, path: str):
 
 @router.get("/get-file/")
 async def get_file(path: str):
-    """Returns the contents of a file."""
-    try:
-        with open(path, "r") as file:
-            return file.read()
-    except FileNotFoundError:
+    if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path)
 
 
 @router.post("/upload-file/")

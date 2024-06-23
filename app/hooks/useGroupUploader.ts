@@ -80,6 +80,11 @@ const useGroupUploader = () => {
     return response.data;
   };
 
+  const writeFileGroups = async (group: AnnotationGroup) => {
+    const response = await fetchAPI(api_url, "annotations/insert/file_groups", group, "POST");
+    return response;
+  };
+
   const handleFile = async (file: FileAnnotation) => {
     try {
       updateFile({ ...file, status: "uploading" });
@@ -116,6 +121,8 @@ const useGroupUploader = () => {
     setStatusMessageStream((prev) => [...prev, { type: "INFO", text: `Group contains ${files.length} files` }]);
     setStatusMessageStream((prev) => [...prev, { type: "INFO", text: `Uploading ${filesToUpload.length} files` }]);
 
+    await writeGroupData(group);
+
     try {
       for (let i = 0; i < filesToUpload.length; i += batchSize) {
         setStatusMessageStream((prev) => [
@@ -125,9 +132,9 @@ const useGroupUploader = () => {
         const batch = files.slice(i, i + batchSize);
         const uploadPromises = batch.map((file) => handleFile(file));
         await Promise.all(uploadPromises);
+        await writeFileGroups(group);
       }
       setStatusMessageStream((prev) => [...prev, { type: "SUCCESS", text: "All files uploaded successfully" }]);
-      await writeGroupData(group);
       setIsSuccess(true);
     } catch (error) {
       setStatusMessageStream((prev) => [...prev, { type: "ERROR", text: `Error uploading files: ${error.message}` }]);
