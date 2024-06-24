@@ -66,8 +66,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   annotationGroupImage: {
-    width: 100,
-    height: "100%",
+    maxHeight: 100,
     backgroundColor: "#eee",
     borderRadius: 5,
   },

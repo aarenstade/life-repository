@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import { Alert, ScrollView, View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 import * as FileSystem from "expo-file-system";
 import FilePreviewGrid from "../../components/annotation/FileAnnotationPreviewGrid";
@@ -14,9 +14,12 @@ import { generate_id, utcNow } from "../../utilities/general";
 import useGroupUploader from "../../hooks/useGroupUploader";
 import { CreateAnnotationGroupPageProps } from "../../App";
 
-const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigation }) => {
+const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigation, route }) => {
   const { isUploading, isSuccess, uploadGroup, statusMessageStream } = useGroupUploader();
   const steps = ["add-type", "select-files", "annotate-group", "annotate-individual", "review"];
+
+  const group_id = route.params?.group_id || null;
+  const initialLoad = useRef(true);
 
   const [activeFileUri, setActiveFileUri] = useState<string | null>(null);
   const [drafts, setDrafts] = useAnnotationDrafts((store) => [store.draftGroups, store.setDraftGroups]);
@@ -31,11 +34,30 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
   ]);
 
   useEffect(() => {
-    if (!group) {
+    if (!initialLoad.current) {
+      return;
+    }
+
+    if (!group && !group_id) {
       setStep("add-type");
       resetActiveAnnotation();
+      initialLoad.current = true;
+      return;
     }
-  }, [group]);
+
+    if (group_id) {
+      const group = drafts.find((draft) => draft.group_id === group_id);
+      if (group) {
+        setGroup(group);
+        setStep("select-files");
+      }
+    }
+
+    if (initialLoad.current) {
+      initialLoad.current = false;
+      return;
+    }
+  }, [group, group_id, initialLoad]);
 
   const resetActiveAnnotation = () => {
     setGroup({

@@ -7,7 +7,7 @@ const DraftAnnotationGroupsPage: FC<DraftAnnotationGroupsPageProps> = ({ navigat
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Draft Annotation Groups</Text>
-      <DraftAnnotationGroupsList onClick={(groupId) => navigation.navigate("create_annotation_group")} />
+      <DraftAnnotationGroupsList onClick={(groupId) => navigation.navigate("create_annotation_group", { group_id: groupId })} />
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("create_annotation_group")}>
         <Text style={styles.buttonText}>Create New Group</Text>
       </TouchableOpacity>

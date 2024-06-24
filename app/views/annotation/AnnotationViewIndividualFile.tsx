@@ -38,7 +38,7 @@ const IndividualFileAnnotation: FC<IndividualFileAnnotationProps> = ({ file, onU
     <View style={{ flex: 1 }}>
       <ScrollView
         style={{ flex: 1, flexDirection: "column", paddingHorizontal: 10 }}
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-start", height: height * 1.5, gap: 10 }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-start", alignItems: "center", height: height * 1.5, gap: 10 }}
       >
         <FileDisplay uri={file.uri} />
         <TranscribeTextInput multiline value={file.description} onChangeText={updateFileDescription} insetBottom={height * 0.12} />

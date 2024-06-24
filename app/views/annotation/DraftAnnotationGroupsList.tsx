@@ -39,14 +39,11 @@ const DraftAnnotationGroupsList: FC<DraftAnnotationGroupsListProps> = ({ onClick
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Draft Annotation Groups</Text>
-      <ScrollView style={styles.scrollView}>
-        {sortedDrafts.map((draft) => (
-          <AnnotationGroupRow key={draft.group_id} group={draft} onDelete={handleDeleteDraft} onClick={onClick} />
-        ))}
-      </ScrollView>
-    </View>
+    <ScrollView style={styles.scrollView}>
+      {sortedDrafts.map((draft) => (
+        <AnnotationGroupRow key={draft.group_id} group={draft} onDelete={handleDeleteDraft} onClick={onClick} />
+      ))}
+    </ScrollView>
   );
 };
 

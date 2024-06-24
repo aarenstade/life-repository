@@ -3,6 +3,7 @@ import { TouchableOpacity, View, Image, Text } from "react-native";
 import { Feather, Entypo } from "@expo/vector-icons";
 import { FileAnnotation } from "../../types/annotation";
 import FileDisplay from "../media/FileDisplay";
+import { useActiveAnnotation } from "../../state/annotations";
 
 interface FileAnnotationPreviewIconProps {
   file: FileAnnotation;
@@ -12,6 +13,7 @@ interface FileAnnotationPreviewIconProps {
 }
 
 const FileAnnotationPreviewIcon: FC<FileAnnotationPreviewIconProps> = ({ file, onDelete, onClick, featured }) => {
+  const is_uploaded = useActiveAnnotation((state) => state.group.files.find((f) => f.file_id === file.file_id)?.status === "uploaded");
   const fileType = file.uri.split(".").pop()?.toLowerCase();
 
   const renderDeleteButton = () => (
@@ -38,6 +40,13 @@ const FileAnnotationPreviewIcon: FC<FileAnnotationPreviewIconProps> = ({ file, o
             <Text style={{ marginLeft: 5, color: "green" }}>Uploaded</Text>
           </View>
         );
+      case "error":
+        return (
+          <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#FFEBEE" }}>
+            <Feather name='x' size={18} color='red' />
+            <Text style={{ marginLeft: 5, color: "red" }}>Error</Text>
+          </View>
+        );
       default:
         return null;
     }
@@ -55,7 +64,14 @@ const FileAnnotationPreviewIcon: FC<FileAnnotationPreviewIconProps> = ({ file, o
       case "jpeg":
       case "png":
       case "gif":
-        return <FileDisplay file_id={file.file_id} show_thumbnail style={{ width: 100, height: 100, margin: 10 }} />;
+        return (
+          <FileDisplay
+            file_id={is_uploaded ? file.file_id : undefined}
+            uri={is_uploaded ? undefined : file.uri}
+            show_thumbnail
+            style={{ width: 100, height: 100, margin: 10 }}
+          />
+        );
       case "mp4":
       case "mov":
         return <Text style={{ color: "#fff" }}>Video</Text>;

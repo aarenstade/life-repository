@@ -22,7 +22,7 @@ export type PageParams = {
   home: undefined;
   settings: undefined;
   file_system: undefined;
-  create_annotation_group: undefined;
+  create_annotation_group: { group_id?: string };
   saved_annotation_groups: undefined;
   draft_annotation_groups: undefined;
 };

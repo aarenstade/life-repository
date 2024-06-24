@@ -26,13 +26,12 @@ const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, file_id, show_thumbna
   const isExternalFile = (uri: string) => !uri.startsWith("file://");
 
   const fetchFilePathFromFileId = async (id: string): Promise<string> => {
-    if (show_thumbnail) {
-      const response = await fetchAPI(api_url, "/paths/get-thumbnail-from-file-id", { file_id: id }, "GET");
-      return response.data.thumbnail_path;
-    } else {
-      const response = await fetchAPI(api_url, "/paths/get-path-from-file-id", { file_id: id }, "GET");
-      return response.data.path;
-    }
+    const responseThumbnail = fetchAPI(api_url, "/paths/get-thumbnail-from-file-id", { file_id: id }, "GET");
+    const responsePath = fetchAPI(api_url, "/paths/get-path-from-file-id", { file_id: id }, "GET");
+
+    const [thumbnailResponse, pathResponse] = await Promise.all([responseThumbnail, responsePath]);
+
+    return show_thumbnail ? thumbnailResponse.data?.thumbnail_path || pathResponse.data?.path : pathResponse.data?.path || "";
   };
 
   const loadFile = async (uri: string): Promise<string> => {
@@ -70,10 +69,11 @@ const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, file_id, show_thumbna
       case "jpeg":
       case "png":
       case "gif":
-        Image.getSize(uri, () => {
+        Image.getSize(uri, (width, height) => {
+          const aspectRatio = width / height;
           const imageStyle: StyleProp<ImageStyle> = merge
-            ? [{ height: "100%", minHeight: 200, maxHeight: 400, flexGrow: 1 }, style as ImageStyle]
-            : [{ height: "100%", minHeight: 200, maxHeight: 400, flexGrow: 1 }, style as ImageStyle];
+            ? [{ aspectRatio, maxHeight: 400, flexGrow: 1 }, style as ImageStyle]
+            : [{ aspectRatio, maxHeight: 400, flexGrow: 1 }, style as ImageStyle];
           setFileContent(<Image source={{ uri }} style={imageStyle} resizeMode='contain' />);
         });
         break;
