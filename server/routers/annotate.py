@@ -1,11 +1,10 @@
 import os
 from fastapi import APIRouter, HTTPException, Request
-from typing import List
-
-from dbio.supabase import SupabaseDatabaseAdapter
-from services.thumbnail_extractor import ThumbnailExtractor
 
 from config import Config
+from utilities.general import get_db
+from services.thumbnail_extractor import ThumbnailExtractor
+
 
 config = Config()
 
@@ -20,9 +19,7 @@ Read Functions
 
 @router.get("/group/{group_id}", response_model=dict)
 async def get_group_annotation(group_id: str):
-    db = SupabaseDatabaseAdapter(
-        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
-    )
+    db = get_db()
 
     group = db.select("groups", "*", {"id": group_id})
     group = group[0] if group else None
@@ -77,9 +74,7 @@ async def get_group_annotation(group_id: str):
 
 @router.get("/groups/ids", response_model=list)
 async def get_all_group_ids():
-    db = SupabaseDatabaseAdapter(
-        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
-    )
+    db = get_db()
 
     groups = db.select("groups", "*")
     group_ids = [group["id"] for group in groups]
@@ -96,9 +91,7 @@ Write Functions
 
 @router.post("/insert/file", response_model=dict)
 async def insert_file_annotation(request: Request):
-    db = SupabaseDatabaseAdapter(
-        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
-    )
+    db = get_db()
 
     body = await request.json()
     file, path = body["file"], body["path"]
@@ -154,9 +147,7 @@ async def insert_file_annotation(request: Request):
 
 @router.post("/insert/group", response_model=dict)
 async def insert_group_annotation(request: Request):
-    db = SupabaseDatabaseAdapter(
-        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
-    )
+    db = get_db()
 
     body = await request.json()
     group_id = body["group_id"]
@@ -181,9 +172,7 @@ async def insert_group_annotation(request: Request):
 
 @router.post("/insert/file_groups", response_model=dict)
 async def insert_file_groups(request: Request):
-    db = SupabaseDatabaseAdapter(
-        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
-    )
+    db = get_db()
 
     body = await request.json()
 

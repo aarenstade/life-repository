@@ -38,8 +38,7 @@ const useQuery = <T = any>(path: string, queryParams?: QueryParams): UseQueryRes
         if (response.success && response.data) {
           if (isMounted) setData(response.data);
         } else {
-          console.log(response);
-          if (isMounted) setError(response.data.message || "Failed to fetch data");
+          if (isMounted) setError(response.data?.message || "Failed to fetch data");
         }
       } catch (err: any) {
         if (isMounted) setError(err.message || "An error occurred while fetching data");

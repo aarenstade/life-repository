@@ -391,7 +391,8 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
             style={{ marginTop: 16, padding: 12, backgroundColor: "#007bff", borderRadius: 4 }}
             onPress={() => {
               resetActiveAnnotation();
-              navigation.navigate("saved_annotation_groups");
+              resetState();
+              navigation.navigate("home");
             }}
           >
             <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 18 }}>Done</Text>
