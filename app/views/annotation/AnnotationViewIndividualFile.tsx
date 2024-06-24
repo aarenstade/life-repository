@@ -4,8 +4,10 @@ import TranscribeTextInput from "../../components/inputs/transcribe-inputs/Trans
 import MultiStepChinView from "../../components/control/MultiStepChinView";
 import FileDisplay from "../../components/media/FileDisplay";
 import { FileAnnotation, Tag } from "../../types/annotation";
-import _ from "lodash";
 import TagAnnotationInput from "../../components/inputs/transcribe-inputs/TagAnnotationInput";
+import _ from "lodash";
+import ToggleField from "../../components/inputs/transcribe-inputs/ToggleField";
+import { useActiveAnnotation } from "../../state/annotations";
 
 interface IndividualFileAnnotationProps {
   file: FileAnnotation;
@@ -14,6 +16,7 @@ interface IndividualFileAnnotationProps {
 
 const IndividualFileAnnotation: FC<IndividualFileAnnotationProps> = ({ file, onUpdate }) => {
   const { height } = Dimensions.get("window");
+  const [group, setGroup] = useActiveAnnotation((state) => [state.group, state.setGroup]);
 
   const updateFileTags = (tags: Tag[]) => {
     onUpdate({ ...file, tags });
@@ -23,15 +26,31 @@ const IndividualFileAnnotation: FC<IndividualFileAnnotationProps> = ({ file, onU
     onUpdate({ ...file, description: text });
   };
 
+  const toggleCoverPhoto = () => {
+    if (group.cover_image_file_id == file.file_id) {
+      setGroup({ ...group, cover_image_file_id: undefined });
+    } else {
+      setGroup({ ...group, cover_image_file_id: file.file_id });
+    }
+  };
+
   return (
-    <ScrollView
-      style={{ flex: 1, flexDirection: "column", paddingHorizontal: 10 }}
-      contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-start", height: height * 1.5, gap: 10 }}
-    >
-      <FileDisplay file_uri={file.uri} />
-      <TranscribeTextInput multiline value={file.description} onChangeText={updateFileDescription} insetBottom={height * 0.12} />
-      <TagAnnotationInput tags={file.tags} onTagsChange={updateFileTags} />
-    </ScrollView>
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={{ flex: 1, flexDirection: "column", paddingHorizontal: 10 }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-start", height: height * 1.5, gap: 10 }}
+      >
+        <FileDisplay uri={file.uri} />
+        <TranscribeTextInput multiline value={file.description} onChangeText={updateFileDescription} insetBottom={height * 0.12} />
+        <ToggleField
+          checked={group.cover_image_file_id == file.file_id}
+          onText='Unset as cover photo'
+          offText='Set as cover photo'
+          onChange={toggleCoverPhoto}
+        />
+        <TagAnnotationInput tags={file.tags} onTagsChange={updateFileTags} />
+      </ScrollView>
+    </View>
   );
 };
 

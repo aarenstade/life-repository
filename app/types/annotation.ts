@@ -6,6 +6,7 @@ export interface BaseAnnotationGroup {
   description: string;
   tags: Tag[];
   flow_type: AnnotationFlowType;
+  cover_image_file_id?: string;
   created_at: string;
   updated_at: string;
 }

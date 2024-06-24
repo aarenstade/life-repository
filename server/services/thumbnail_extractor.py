@@ -3,7 +3,7 @@ import shlex
 import subprocess
 from typing import List, Optional, Union
 
-from PIL import Image
+from PIL import Image, ExifTags
 
 from config import Config
 from utilities.image import convert_heic_to_jpg
@@ -15,18 +15,27 @@ class ThumbnailExtractor:
     def __init__(
         self,
         media_path: str,
-        media_id: str,
         output_dir: str,
-        media_type: str,
+        media_type: Optional[str] = None,
+        media_id: Optional[str] = None,
         size: int = 512,
     ):
         self.media_path = media_path
-        self.media_id = media_id
+        self.media_id = media_id or os.path.splitext(os.path.basename(media_path))[0]
         self.output_dir = output_dir
-        self.media_type = media_type
+        self.media_type = media_type or self._determine_media_type()
         self.size = size
 
         os.makedirs(self.output_dir, exist_ok=True)
+
+    def _determine_media_type(self) -> str:
+        extension = os.path.splitext(self.media_path)[1].lower().replace(".", "")
+        if extension in config.video_file_types:
+            return "video"
+        elif extension in config.image_file_types:
+            return "image"
+        else:
+            raise ValueError("Unsupported media type")
 
     def _run_command(self, command: str) -> subprocess.CompletedProcess:
         return subprocess.run(
@@ -55,7 +64,26 @@ class ThumbnailExtractor:
     ) -> None:
         img = Image.open(input_path)
         img.thumbnail((self.size, self.size))
+        img = self._maintain_orientation(img)
         img.save(output_path, "JPEG", quality=quality)
+
+    def _maintain_orientation(self, img: Image) -> Image:
+        try:
+            for orientation in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[orientation] == "Orientation":
+                    break
+            exif = img._getexif()
+            if exif is not None:
+                orientation = exif.get(orientation)
+                if orientation == 3:
+                    img = img.rotate(180, expand=True)
+                elif orientation == 6:
+                    img = img.rotate(270, expand=True)
+                elif orientation == 8:
+                    img = img.rotate(90, expand=True)
+        except (AttributeError, KeyError, IndexError):
+            pass
+        return img
 
     def _extract_video(self, n: int) -> List[str]:
         paths = []

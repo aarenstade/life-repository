@@ -2,6 +2,7 @@ import React, { FC } from "react";
 import { View, Alert } from "react-native";
 import FilePreviewIcon from "./FileAnnotationPreviewIcon";
 import { FileAnnotation } from "../../types/annotation";
+import { useActiveAnnotation } from "../../state/annotations";
 
 interface FileAnnotationPreviewGridProps {
   files: FileAnnotation[];
@@ -10,6 +11,8 @@ interface FileAnnotationPreviewGridProps {
 }
 
 const FileAnnotationPreviewGrid: FC<FileAnnotationPreviewGridProps> = ({ files, onFileClick, onFileRemove }) => {
+  const cover_file_id = useActiveAnnotation((state) => state.group.cover_image_file_id);
+
   const handleDelete = (uri: string) => {
     Alert.alert(
       "Confirm Delete",
@@ -38,6 +41,7 @@ const FileAnnotationPreviewGrid: FC<FileAnnotationPreviewGridProps> = ({ files, 
         <FilePreviewIcon
           key={index}
           file={file}
+          featured={file.file_id === cover_file_id}
           onClick={() => onFileClick(file.uri)}
           onDelete={onFileRemove ? () => handleDelete(file.uri) : undefined}
         />

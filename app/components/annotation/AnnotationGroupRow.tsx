@@ -13,7 +13,9 @@ interface AnnotationGroupRowProps {
 
 const AnnotationGroupRow: FC<AnnotationGroupRowProps> = ({ group, onDelete, onClick }) => (
   <TouchableOpacity style={styles.annotationGroupRow} onPress={() => onClick(group.group_id)}>
-    {group.files.length > 0 && <FileDisplay uri={group.files[0].uri} style={styles.annotationGroupImage} />}
+    {group.files.length > 0 && (
+      <FileDisplay file_id={group.cover_image_file_id || group.files?.[0].file_id || ""} show_thumbnail style={styles.annotationGroupImage} />
+    )}
     <View style={styles.annotationGroupTextContainer}>
       <Text style={styles.annotationGroupTitle}>
         {group.title ? (group.title.length > 60 ? `${group.title.substring(0, 60)}...` : group.title) : "No Title"}

@@ -6,6 +6,7 @@ CONFIG_PATH = os.path.join(ROOT_PATH, "config.json")
 TMP_DIR = os.path.join(ROOT_PATH, "data", "tmp")  # TODO get from global config
 DATA_DIR = os.path.join(ROOT_PATH, "data")  # TODO get from global config
 ANNOTATED_FILES_DIR = os.path.join(DATA_DIR, "annotation-app")
+THUMBNAILS_DIR = os.path.join(DATA_DIR, "thumbnails")
 
 
 def load_config():
@@ -18,6 +19,8 @@ def load_config():
 
 os.makedirs(TMP_DIR, exist_ok=True)
 os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(THUMBNAILS_DIR, exist_ok=True)
+
 
 VIDEO_FILE_TYPES = [
     "mp4",
@@ -98,9 +101,11 @@ class Config:
         self.config_path = CONFIG_PATH
         self.tmp_dir = TMP_DIR
         self.data_dir = DATA_DIR
+        self.thumbnails_dir = THUMBNAILS_DIR
         self.image_file_types = config_data.get("image_file_types", IMAGE_FILE_TYPES)
         self.audio_file_types = config_data.get("audio_file_types", AUDIO_FILE_TYPES)
         self.text_file_types = config_data.get("text_file_types", TEXT_FILE_TYPES)
+        self.video_file_types = config_data.get("video_file_types", VIDEO_FILE_TYPES)
         self.data_file_types = config_data.get("data_file_types", DATA_FILE_TYPES)
         self.max_file_upload_size_bytes = config_data.get(
             "max_file_upload_size_bytes", MAX_FILE_UPLOAD_SIZE_BYTES

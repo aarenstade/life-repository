@@ -3,6 +3,11 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import List
 
 from dbio.supabase import SupabaseDatabaseAdapter
+from services.thumbnail_extractor import ThumbnailExtractor
+
+from config import Config
+
+config = Config()
 
 router = APIRouter()
 
@@ -106,6 +111,12 @@ async def insert_file_annotation(request: Request):
     file_description = file["description"]
     file_tags = file["tags"]
 
+    thumbnail_extractor = ThumbnailExtractor(
+        media_path=path, output_dir=config.thumbnails_dir
+    )
+    thumbnail_paths = thumbnail_extractor.extract()
+    thumbnail_paths = thumbnail_paths if thumbnail_paths else []
+
     file_data = {
         "id": file_id,
         "name": os.path.basename(file_uri),
@@ -114,6 +125,15 @@ async def insert_file_annotation(request: Request):
     }
 
     db.insert("files", file_data)
+
+    for thumbnail_path in thumbnail_paths:
+        db.insert(
+            "file_thumbnails",
+            {
+                "file_id": file_id,
+                "thumbnail_path": thumbnail_path,
+            },
+        )
 
     file_description_data = {
         "file_id": file_id,
@@ -168,12 +188,17 @@ async def insert_file_groups(request: Request):
     body = await request.json()
 
     group_id = body["group_id"]
+    cover_image_file_id = body["cover_image_file_id"]
     file_ids = [file["file_id"] for file in body.get("files", [])]
 
     for file_id in file_ids:
         try:
             group_file_data = {"group_id": group_id, "file_id": file_id}
             db.insert("file_groups", group_file_data)
+
+            if file_id == cover_image_file_id:
+                db.update("groups", {"cover_image_file_id": file_id}, {"id": group_id})
+
         except Exception as e:
             print(f"Failed to insert file group data for file_id {file_id}: {e}")
 

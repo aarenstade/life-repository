@@ -5,12 +5,18 @@ import useConfig from "../../hooks/useConfig";
 import fetchAPI from "../../lib/api";
 
 interface FileDisplayProps {
-  uri: string;
+  uri?: string;
+  file_id?: string;
+  show_thumbnail?: boolean;
   style?: StyleProp<ViewStyle | ImageStyle | TextStyle>;
   merge?: boolean;
 }
 
-const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, style, merge = false }) => {
+const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, file_id, show_thumbnail, style, merge = false }) => {
+  if (!fileUri && !file_id) {
+    throw new Error("FileDisplay requires either uri or file_id to be provided");
+  }
+
   const [localUri, setLocalUri] = useState<string>("");
   const [fileContent, setFileContent] = useState<JSX.Element | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -18,6 +24,16 @@ const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, style, merge = false 
 
   const getFileExtension = (uri: string) => uri.split(".").pop()?.toLowerCase();
   const isExternalFile = (uri: string) => !uri.startsWith("file://");
+
+  const fetchFilePathFromFileId = async (id: string): Promise<string> => {
+    if (show_thumbnail) {
+      const response = await fetchAPI(api_url, "/paths/get-thumbnail-from-file-id", { file_id: id }, "GET");
+      return response.data.thumbnail_path;
+    } else {
+      const response = await fetchAPI(api_url, "/paths/get-path-from-file-id", { file_id: id }, "GET");
+      return response.data.path;
+    }
+  };
 
   const loadFile = async (uri: string): Promise<string> => {
     setLoading(true);
@@ -77,19 +93,35 @@ const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, style, merge = false 
 
   useEffect(() => {
     const fetchAndDisplayFile = async () => {
-      if (isExternalFile(fileUri)) {
-        const localUri = await loadFile(fileUri);
+      if (file_id) {
+        const fetchedUri = await fetchFilePathFromFileId(file_id);
+        if (!fetchedUri) {
+          setFileContent(<Text>Error loading file</Text>);
+          return;
+        }
+
+        const localUri = await loadFile(fetchedUri);
         if (localUri) {
           setLocalUri(localUri);
           displayFile(localUri);
         }
-      } else {
-        displayFile(fileUri);
+      }
+
+      if (fileUri) {
+        if (isExternalFile(fileUri)) {
+          const localUri = await loadFile(fileUri);
+          if (localUri) {
+            setLocalUri(localUri);
+            displayFile(localUri);
+          }
+        } else {
+          displayFile(fileUri);
+        }
       }
     };
 
     fetchAndDisplayFile();
-  }, [fileUri, style, merge]);
+  }, [fileUri, file_id, style, merge]);
 
   return loading ? (
     <View style={styles.loadingContainer}>

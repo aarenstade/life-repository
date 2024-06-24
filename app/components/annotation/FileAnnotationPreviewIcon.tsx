@@ -1,9 +1,17 @@
 import { FC } from "react";
 import { TouchableOpacity, View, Image, Text } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Entypo } from "@expo/vector-icons";
 import { FileAnnotation } from "../../types/annotation";
+import FileDisplay from "../media/FileDisplay";
 
-const FileAnnotationPreviewIcon: FC<{ file: FileAnnotation; onDelete?: () => void; onClick?: () => void }> = ({ file, onDelete, onClick }) => {
+interface FileAnnotationPreviewIconProps {
+  file: FileAnnotation;
+  onDelete?: () => void;
+  onClick?: () => void;
+  featured?: boolean;
+}
+
+const FileAnnotationPreviewIcon: FC<FileAnnotationPreviewIconProps> = ({ file, onDelete, onClick, featured }) => {
   const fileType = file.uri.split(".").pop()?.toLowerCase();
 
   const renderDeleteButton = () => (
@@ -47,7 +55,7 @@ const FileAnnotationPreviewIcon: FC<{ file: FileAnnotation; onDelete?: () => voi
       case "jpeg":
       case "png":
       case "gif":
-        return <Image source={{ uri: file.uri }} style={{ width: 100, height: 100, margin: 10 }} />;
+        return <FileDisplay file_id={file.file_id} show_thumbnail style={{ width: 100, height: 100, margin: 10 }} />;
       case "mp4":
       case "mov":
         return <Text style={{ color: "#fff" }}>Video</Text>;
@@ -79,6 +87,11 @@ const FileAnnotationPreviewIcon: FC<{ file: FileAnnotation; onDelete?: () => voi
     <TouchableOpacity onPress={handlePress}>
       <View style={{ position: "relative", width: 100, height: 140, margin: 10 }}>
         {onDelete && renderDeleteButton()}
+        {featured && (
+          <View style={{ position: "absolute", top: -10, left: -10, padding: 1, zIndex: 1, backgroundColor: "white", borderRadius: 50 }}>
+            <Entypo name='star' size={18} color='skyblue' />
+          </View>
+        )}
         <View
           style={{
             width: 100,

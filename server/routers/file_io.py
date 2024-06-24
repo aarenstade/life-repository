@@ -20,6 +20,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 import subprocess
 
+from utilities.general import get_db
+
 
 # TODO remove this completely and utilize a partial type from tables
 class FileItemModel(BaseModel):
@@ -131,6 +133,26 @@ async def get_file(path: str):
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path)
+
+
+@router.get("/get-path-from-file-id")
+async def get_uri_from_file_id(file_id: str):
+    db = get_db()
+    path = db.select("files", "path", {"id": file_id})
+    if not path:
+        return {"error": "File not found"}
+    return {"path": path[0].get("path")}
+
+
+@router.get("/get-thumbnail-from-file-id")
+async def get_thumbnail_from_file_id(file_id: str):
+    db = get_db()
+    thumbnail_path = db.select(
+        "file_thumbnails", "thumbnail_path", {"file_id": file_id}
+    )
+    if not thumbnail_path:
+        return {"error": "File not found"}
+    return {"thumbnail_path": thumbnail_path[0].get("thumbnail_path")}
 
 
 @router.post("/upload-file/")
