@@ -7,6 +7,7 @@ export interface BaseAnnotationGroup {
   tags: Tag[];
   flow_type: AnnotationFlowType;
   cover_image_file_id?: string;
+  date_description?: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,6 +30,7 @@ export interface FileAnnotation {
   annotated_at: string;
   added_at: string;
   status?: "idle" | "error" | "uploading" | "uploaded";
+  date_description?: string;
   uploaded_at?: string;
   metadata?: any;
 }

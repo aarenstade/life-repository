@@ -27,6 +27,11 @@ const AnnotationViewFileGroup: FC<AnnotationViewFileGroupProps> = ({ hideFilePre
         multiline
         noFullScreen
       />
+      <TranscribeTextInput
+        value={group.date_description}
+        onChangeText={(text) => setGroup({ ...group, date_description: text })}
+        placeholder='Enter date description'
+      />
       <TagAnnotationInput tags={groupTags} onTagsChange={setGroupTags} />
       {!hideFilePreviewGrid && (
         <ScrollView style={groupViewStyles.scollViewContainer}>

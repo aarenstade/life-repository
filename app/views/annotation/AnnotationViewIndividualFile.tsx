@@ -8,6 +8,7 @@ import TagAnnotationInput from "../../components/inputs/transcribe-inputs/TagAnn
 import _ from "lodash";
 import ToggleField from "../../components/inputs/transcribe-inputs/ToggleField";
 import { useActiveAnnotation } from "../../state/annotations";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 interface IndividualFileAnnotationProps {
   file: FileAnnotation;
@@ -41,13 +42,57 @@ const IndividualFileAnnotation: FC<IndividualFileAnnotationProps> = ({ file, onU
         contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-start", alignItems: "center", height: height * 1.5, gap: 10 }}
       >
         <FileDisplay uri={file.uri} />
-        <TranscribeTextInput multiline value={file.description} onChangeText={updateFileDescription} insetBottom={height * 0.12} />
-        <ToggleField
-          checked={group.cover_image_file_id == file.file_id}
-          onText='Unset as cover photo'
-          offText='Set as cover photo'
-          onChange={toggleCoverPhoto}
+        <TranscribeTextInput
+          multiline
+          value={file.description}
+          placeholder='Write a description...'
+          onChangeText={updateFileDescription}
+          insetBottom={height * 0.12}
         />
+        <TranscribeTextInput
+          value={file.date_description || ""}
+          placeholder='Enter date description (optional)'
+          onChangeText={(text) => onUpdate({ ...file, date_description: text })}
+          insetBottom={height * 0.12}
+        />
+        <View style={{ width: "100%", marginVertical: 10 }}>
+          <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5 }}>Select Date</Text>
+          {file.date_description && !isNaN(Date.parse(file.date_description)) && (
+            <DateTimePicker
+              value={new Date(file.date_description) || new Date()}
+              mode='date'
+              display='inline'
+              onChange={(event, date) => {
+                if (date) {
+                  onUpdate({ ...file, date_description: date.toISOString() });
+                }
+              }}
+            />
+          )}
+        </View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <ToggleField
+            checked={group.cover_image_file_id == file.file_id}
+            onText='Unset as cover photo'
+            offText='Set as cover photo'
+            onChange={toggleCoverPhoto}
+          />
+          <TouchableOpacity
+            style={{
+              paddingVertical: 10,
+              paddingHorizontal: 20,
+              backgroundColor: "#007BFF",
+              borderRadius: 5,
+              justifyContent: "center",
+              alignItems: "center",
+              marginLeft: 10,
+            }}
+            onPress={() => onUpdate({ ...file, date_description: file.date_description ? "" : new Date().toISOString() })}
+          >
+            <Text style={{ color: "white", fontWeight: "bold" }}>{file.date_description ? "Reset Date" : "Set Date"}</Text>
+          </TouchableOpacity>
+        </View>
+
         <TagAnnotationInput tags={file.tags} onTagsChange={updateFileTags} />
       </ScrollView>
     </View>

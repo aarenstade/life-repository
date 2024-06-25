@@ -41,7 +41,7 @@ async def get_group_annotation(group_id: str):
         tags = [tag["tag_id"] for tag in file_tags]
 
         file = file[0] if file else None
-        file_description = file_description[0] if file_description else None
+        file_description = file_description[0] if file_description else {}
 
         if not file:
             continue
@@ -51,6 +51,7 @@ async def get_group_annotation(group_id: str):
                 "file_id": file_id,
                 "uri": file.get("path"),
                 "description": file_description.get("manual_description"),
+                "date_description": file_description.get("date_description"),
                 "tags": tags,
                 "annotated_at": file_description.get("created_at"),
                 "added_at": file.get("created_at"),
@@ -63,6 +64,8 @@ async def get_group_annotation(group_id: str):
         "group_id": group_id,
         "title": group.get("title"),
         "description": group.get("description"),
+        "date_description": group.get("date_description"),
+        "cover_image_file_id": group.get("cover_image_file_id"),
         "tags": tags,
         "files": file_annotations,
         "created_at": group.get("created_at"),
@@ -102,6 +105,7 @@ async def insert_file_annotation(request: Request):
     file_id = file["file_id"]
     file_uri = file["uri"]
     file_description = file["description"]
+    date_description = file.get("date_description")
     file_tags = file["tags"]
 
     thumbnail_extractor = ThumbnailExtractor(
@@ -131,6 +135,7 @@ async def insert_file_annotation(request: Request):
     file_description_data = {
         "file_id": file_id,
         "manual_description": file_description,
+        "date_description": date_description,
         "generated_description": None,
         "generated_description_model": None,
     }
@@ -151,13 +156,17 @@ async def insert_group_annotation(request: Request):
 
     body = await request.json()
     group_id = body["group_id"]
-    title, description = body["title"], body["description"]
-    tags = body["tags"]
+
+    title = body.get("title")
+    description = body.get("description")
+    date_description = body.get("date_description")
+    tags = body.get("tags")
 
     group_data = {
         "id": group_id,
         "title": title,
         "description": description,
+        "date_description": date_description,
     }
 
     db.insert("groups", group_data)
@@ -172,12 +181,13 @@ async def insert_group_annotation(request: Request):
 
 @router.post("/insert/file_groups", response_model=dict)
 async def insert_file_groups(request: Request):
+    print("inserting file groups!")
     db = get_db()
 
     body = await request.json()
 
     group_id = body["group_id"]
-    cover_image_file_id = body["cover_image_file_id"]
+    cover_image_file_id = body.get("cover_image_file_id")
     file_ids = [file["file_id"] for file in body.get("files", [])]
 
     for file_id in file_ids:
