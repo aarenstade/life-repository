@@ -217,7 +217,7 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
   const handleSingleFileChange = (updatedFile: FileAnnotation) => updateFile(updatedFile);
 
   const handleSelectMultipleFileUris = (data: { uri: string; metadata: any }[]) => {
-    const file_uris = group.files.map((file) => file.uri);
+    const file_uris = group.files?.map((file) => file.uri) || [];
     const newUris = data.filter((file) => !file_uris.includes(file.uri));
     const newFiles: FileAnnotation[] = newUris.map((file) => ({
       file_id: generate_id(),
@@ -248,7 +248,7 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
       metadata: data.metadata,
     };
 
-    const file_uris = group.files.map((file) => file.uri);
+    const file_uris = group.files?.map((file) => file.uri) || [];
 
     if (!file_uris.includes(newFile.uri)) {
       setFiles([...group.files, newFile]);
@@ -336,7 +336,7 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
   if (step === "select-files") {
     view = (
       <SelectImagesView
-        images={group.files.map((file) => ({ uri: file.uri, metadata: file.metadata })) || []}
+        images={group.files?.map((file) => ({ uri: file.uri, metadata: file.metadata })) || []}
         onSelectSingleImage={handleSelectSingleFileUri}
         onSelectMultipleImages={handleSelectMultipleFileUris}
         selectMultiple={flowType == "group-then-individual"}
@@ -382,7 +382,7 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
           onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined}
         />
       )}
-
+      {/* 
       {isUploading && !isSuccess && (
         <View style={{ flex: 1 }}>
           <FlatList
@@ -403,7 +403,7 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
             )}
           />
         </View>
-      )}
+      )} */}
       {isSuccess && (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={{ fontSize: 24, fontWeight: "bold", color: "#ffffff", backgroundColor: "#28a745", padding: 8, borderRadius: 4 }}>

@@ -35,7 +35,8 @@
     "react-native-web": "~0.19.6",
     "shortid": "^2.2.16",
     "typescript": "~5.3.3",
-    "zustand": "^4.5.2"
+    "zustand": "^4.5.2",
+    "@react-native-community/datetimepicker": "8.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

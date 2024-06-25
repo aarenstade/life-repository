@@ -4,6 +4,8 @@ import useConfigStore from "../state/config";
 import { SecureStorage } from "../lib/storage/secure-store";
 import _ from "lodash";
 
+const THRESHOLD_SECONDS = 60;
+
 const useConfig = () => {
   const config = useConfigStore((state) => state);
 
@@ -41,6 +43,7 @@ const useConfig = () => {
           if (!_.isEqual(response.data, config.data)) {
             config.setData(response.data);
           }
+          config.setLastFetch(new Date().toISOString());
           config.setConnected(true);
         } else {
           config.setError(response.message || "Failed to fetch config");
@@ -52,8 +55,22 @@ const useConfig = () => {
       }
     };
 
-    fetchConfig();
-  }, [config.api_url]);
+    const shouldFetchConfig = () => {
+      if (!config.last_fetch) {
+        return true;
+      }
+      const lastFetchTime = new Date(config.last_fetch).getTime();
+      const currentTime = new Date().getTime();
+      const timeDifference = (currentTime - lastFetchTime) / 1000;
+
+      console.log({ lastFetchTime, currentTime, timeDifference });
+      return timeDifference > THRESHOLD_SECONDS;
+    };
+
+    if (shouldFetchConfig()) {
+      fetchConfig();
+    }
+  }, [config.api_url, config.last_fetch]);
 
   return { ...config, setApiUrl };
 };

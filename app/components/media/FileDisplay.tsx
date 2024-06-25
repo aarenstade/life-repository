@@ -1,8 +1,8 @@
 import React, { FC, useEffect, useState } from "react";
 import { Image, Text, View, StyleSheet, ActivityIndicator, StyleProp, ImageStyle, ViewStyle, TextStyle } from "react-native";
 import * as FileSystem from "expo-file-system";
-import useConfig from "../../hooks/useConfig";
 import fetchAPI from "../../lib/api";
+import useConfigStore from "../../state/config";
 
 interface FileDisplayProps {
   uri?: string;
@@ -20,7 +20,7 @@ const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, file_id, show_thumbna
   const [localUri, setLocalUri] = useState<string>("");
   const [fileContent, setFileContent] = useState<JSX.Element | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const { api_url } = useConfig();
+  const api_url = useConfigStore((state) => state.api_url);
 
   const getFileExtension = (uri: string) => uri.split(".").pop()?.toLowerCase();
   const isExternalFile = (uri: string) => !uri.startsWith("file://");
@@ -69,13 +69,14 @@ const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, file_id, show_thumbna
       case "jpeg":
       case "png":
       case "gif":
-        Image.getSize(uri, (width, height) => {
+        const imageSizeCallback = (width: number, height: number) => {
           const aspectRatio = width / height;
           const imageStyle: StyleProp<ImageStyle> = merge
             ? [{ aspectRatio, maxHeight: 400, flexGrow: 1 }, style as ImageStyle]
             : [{ aspectRatio, maxHeight: 400, flexGrow: 1 }, style as ImageStyle];
           setFileContent(<Image source={{ uri }} style={imageStyle} resizeMode='contain' />);
-        });
+        };
+        Image.getSize(uri, imageSizeCallback, () => setFileContent(<Text>Error loading image</Text>));
         break;
       case "txt":
         try {
@@ -92,16 +93,19 @@ const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, file_id, show_thumbna
   };
 
   useEffect(() => {
+    let isMounted = true;
+    const pendingCallbacks: { [key: string]: boolean } = {};
+
     const fetchAndDisplayFile = async () => {
       if (file_id) {
         const fetchedUri = await fetchFilePathFromFileId(file_id);
         if (!fetchedUri) {
-          setFileContent(<Text>Error loading file</Text>);
+          if (isMounted) setFileContent(<Text>Error loading file</Text>);
           return;
         }
 
         const localUri = await loadFile(fetchedUri);
-        if (localUri) {
+        if (localUri && isMounted) {
           setLocalUri(localUri);
           displayFile(localUri);
         }
@@ -110,7 +114,7 @@ const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, file_id, show_thumbna
       if (fileUri) {
         if (isExternalFile(fileUri)) {
           const localUri = await loadFile(fileUri);
-          if (localUri) {
+          if (localUri && isMounted) {
             setLocalUri(localUri);
             displayFile(localUri);
           }
@@ -121,6 +125,13 @@ const FileDisplay: FC<FileDisplayProps> = ({ uri: fileUri, file_id, show_thumbna
     };
 
     fetchAndDisplayFile();
+
+    return () => {
+      isMounted = false;
+      Object.keys(pendingCallbacks).forEach((key) => {
+        pendingCallbacks[key] = false;
+      });
+    };
   }, [fileUri, file_id, style, merge]);
 
   return loading ? (

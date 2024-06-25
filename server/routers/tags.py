@@ -1,5 +1,6 @@
 import os
-from fastapi import APIRouter, Request
+import traceback
+from fastapi import APIRouter, HTTPException, Request
 from typing import List
 
 from dbio.supabase import SupabaseDatabaseAdapter
@@ -9,19 +10,26 @@ router = APIRouter()
 
 @router.get("/autocomplete", response_model=List[dict])
 async def get_tag_annotations(request: Request, search: str):
-    db = SupabaseDatabaseAdapter(
-        url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
-    )
+    try:
+        db = SupabaseDatabaseAdapter(
+            url=os.environ["SUPABASE_URL"], key=os.environ["SUPABASE_SECRET_KEY"]
+        )
 
-    results = (
-        db.client.from_("tags")
-        .select("*")
-        .like("tag", f"%{search.lower()}%")
-        .limit(10)
-        .execute()
-    )
+        try:
+            results = (
+                db.client.table("tags")
+                .select("id, tag")
+                .ilike("tag", f"{search}%")
+                .execute()
+            )
+        except Exception as e:
+            print(e)
+            print(traceback.format_exc())
+            raise HTTPException(status_code=500, detail=str(e))
 
-    return [result for result in results.data]
+        return results.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/insert", response_model=dict)

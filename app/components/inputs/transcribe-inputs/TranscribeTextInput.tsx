@@ -10,6 +10,7 @@ interface TranscribeTextInputProps {
   insetBottom?: number;
   insetLeft?: number;
   insetRight?: number;
+  placeholder?: string;
   noFullScreen?: boolean;
   [inputProps: string]: any;
 }
@@ -20,6 +21,7 @@ const TranscribeTextInput: FC<TranscribeTextInputProps> = ({
   insetBottom = 0,
   insetLeft = 0,
   insetRight = 0,
+  placeholder = "Write something here...",
   noFullScreen = false,
   ...rest
 }) => {
@@ -81,7 +83,7 @@ const TranscribeTextInput: FC<TranscribeTextInputProps> = ({
           <Feather name={isFullScreen ? "minimize" : "maximize"} size={20} color='black' />
         </TouchableOpacity>
       )}
-      <TextInput value={rest.value || ""} onChangeText={rest.onChangeText} placeholder='Write something here...' style={styles.input} {...rest} />
+      <TextInput value={rest.value || ""} onChangeText={rest.onChangeText} placeholder={placeholder} style={styles.input} {...rest} />
       <View style={styles.recordButton}>
         <RecordIcon onTranscriptionComplete={handleNewTranscriptText} />
       </View>

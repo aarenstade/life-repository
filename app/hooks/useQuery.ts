@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import fetchAPI from "../lib/api";
-import useConfig from "./useConfig";
+import useConfigStore from "../state/config";
 
 interface QueryParams {
   [key: string]: string | number | boolean;
@@ -16,7 +16,7 @@ const useQuery = <T = any>(path: string, queryParams?: QueryParams): UseQueryRes
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { api_url } = useConfig();
+  const api_url = useConfigStore((state) => state.api_url);
 
   useEffect(() => {
     let isMounted = true; // Flag to check component mount status

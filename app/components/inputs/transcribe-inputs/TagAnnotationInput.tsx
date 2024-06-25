@@ -2,10 +2,9 @@ import React, { FC, useState, useEffect } from "react";
 import { View, TextInput, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Modal from "../../../components/Modal";
-import useConfig from "../../../hooks/useConfig";
 import fetchAPI from "../../../lib/api";
 import { Tag } from "../../../types/annotation";
-import shortid from "shortid";
+import useConfigStore from "../../../state/config";
 import _ from "lodash";
 
 interface TagAnnotationInputProps {
@@ -33,7 +32,7 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<Tag[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const { api_url } = useConfig();
+  const api_url = useConfigStore((state) => state.api_url);
 
   useEffect(() => {
     if (!_.isEqual(initialTags, tags)) {
@@ -57,7 +56,7 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
       } else {
         setSuggestions([]);
       }
-    }, 300);
+    }, 100);
 
     return () => clearTimeout(delayDebounce);
   }, [inputValue, api_url]);
@@ -137,6 +136,7 @@ const TagAnnotationInput: FC<TagAnnotationInputProps> = ({ tags: initialTags, on
       <Modal visible={modalVisible} onRequestClose={toggleModal} verticalPosition='top'>
         <View style={styles.inputContainer}>
           <TextInput
+            autoFocus
             value={inputValue}
             onChangeText={handleInputChange}
             style={[styles.input, { flex: 1 }]}
