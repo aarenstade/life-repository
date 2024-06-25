@@ -1,7 +1,8 @@
 import React, { useState, FC } from "react";
-import { Button, TextInput, Text, View, StyleSheet } from "react-native";
+import { Button, TextInput, Text, View, StyleSheet, Alert } from "react-native";
 import useConfig from "../hooks/useConfig";
 import LoadingIndicator from "../components/LoadingIndicator";
+import { useAnnotationDrafts, useActiveAnnotation } from "../state/annotations";
 
 interface ConfigPageProps {}
 
@@ -9,6 +10,16 @@ const ConfigPage: FC<ConfigPageProps> = () => {
   const config = useConfig();
   const [isEditing, setIsEditing] = useState(false);
   const [newApiUrl, setNewApiUrl] = useState(config.api_url);
+  const resetDrafts = useAnnotationDrafts((state) => state.setDraftGroups);
+  const setGroup = useActiveAnnotation((state) => state.setGroup);
+  const setStep = useActiveAnnotation((state) => state.setStep);
+  const setStatus = useActiveAnnotation((state) => state.setStatus);
+
+  const resetActiveAnnotation = () => {
+    setGroup(null);
+    setStep("add-type");
+    setStatus("annotating");
+  };
 
   const testConnection = async () => {
     const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
@@ -18,6 +29,28 @@ const ConfigPage: FC<ConfigPageProps> = () => {
     } else {
       alert("Please enter a valid URL.");
     }
+  };
+
+  const handleResetAnnotations = () => {
+    Alert.alert(
+      "Reset Annotations",
+      "Are you sure you want to reset all local annotations data?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Reset",
+          onPress: () => {
+            resetDrafts([]);
+            resetActiveAnnotation();
+          },
+          style: "destructive",
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   if (config.loading) {
@@ -62,6 +95,16 @@ const ConfigPage: FC<ConfigPageProps> = () => {
     apiUrlText: {
       marginVertical: 8,
     },
+    resetButton: {
+      marginTop: 20,
+      backgroundColor: "#ef4444", // red-500
+      padding: 10,
+      borderRadius: 5,
+    },
+    resetButtonText: {
+      color: "white",
+      fontWeight: "bold",
+    },
   });
 
   return (
@@ -90,6 +133,9 @@ const ConfigPage: FC<ConfigPageProps> = () => {
             )}
           </>
         )}
+      </View>
+      <View style={styles.resetButton}>
+        <Button title='Reset Annotations' onPress={handleResetAnnotations} color='#ffffff' />
       </View>
     </View>
   );
