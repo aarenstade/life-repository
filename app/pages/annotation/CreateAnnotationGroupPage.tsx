@@ -11,11 +11,16 @@ import CardButton from "../../components/CardButton";
 import { useActiveAnnotation, useAnnotationDrafts } from "../../state/annotations";
 import { AnnotationGroup, FileAnnotation } from "../../types/annotation";
 import { generate_id, utcNow } from "../../utilities/general";
-import useGroupUploader from "../../hooks/useGroupUploader";
+import useAnnotationsGroupUploader from "../../hooks/useAnnotationsGroupUploader";
 import { CreateAnnotationGroupPageProps } from "../../App";
+import fetchAPI from "../../lib/api";
+import useConfigStore from "../../state/config";
+import { createDefaultGroup } from "../../config/annotations";
 
 const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigation, route }) => {
-  const { isUploading, isSuccess, uploadGroup, statusMessageStream } = useGroupUploader();
+  const api_url = useConfigStore((state) => state.api_url);
+
+  const { isUploading, isSuccess, uploadGroup, uploadFile, uploadAndWriteFile, statusMessageStream } = useAnnotationsGroupUploader();
   const steps = ["add-type", "select-files", "annotate-group", "annotate-individual", "review"];
 
   const group_id = route.params?.group_id || null;
@@ -60,16 +65,7 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
   }, [group, group_id, initialLoad]);
 
   const resetActiveAnnotation = () => {
-    setGroup({
-      group_id: generate_id(),
-      title: "",
-      description: "",
-      files: [],
-      tags: [],
-      created_at: utcNow(),
-      updated_at: utcNow(),
-      flow_type: flowType,
-    });
+    setGroup(createDefaultGroup(flowType));
     setFiles([]);
     setStep("add-type");
     setActiveFileUri(null);
@@ -208,15 +204,21 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
     try {
       removeFile(uri);
       await FileSystem.deleteAsync(uri);
+      await deleteFileRemote(uri);
     } catch (error) {
       console.error("Failed to delete the image:", error);
     }
   };
 
+  const deleteFileRemote = async (file_id: string) => {
+    const response = await fetchAPI(api_url, "/annotations/delete/file", { file_id }, "POST");
+    console.log(response);
+  };
+
   const handleFilesChange = (updatedFiles: FileAnnotation[]) => setFiles(updatedFiles);
   const handleSingleFileChange = (updatedFile: FileAnnotation) => updateFile(updatedFile);
 
-  const handleSelectMultipleFileUris = (data: { uri: string; metadata: any }[]) => {
+  const handleSelectMultipleFileUris = async (data: { uri: string; metadata: any }[]) => {
     const file_uris = group.files?.map((file) => file.uri) || [];
     const newUris = data.filter((file) => !file_uris.includes(file.uri));
     const newFiles: FileAnnotation[] = newUris.map((file) => ({
@@ -226,7 +228,6 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
       tags: [],
       annotated_at: null,
       added_at: utcNow(),
-      uploaded: false,
       metadata: data.find((f) => file.uri === f.uri)?.metadata,
     }));
     const updatedFiles = [...group.files, ...newFiles].reduce((acc, file) => {
@@ -234,17 +235,17 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
       return acc;
     }, {} as { [uri: string]: FileAnnotation });
     setFiles(Object.values(updatedFiles).sort((a, b) => new Date(a.added_at).getTime() - new Date(b.added_at).getTime()));
+    await handleUploadFiles(newFiles);
   };
 
-  const handleSelectSingleFileUri = (data: { uri: string; metadata: any }) => {
-    const newFile = {
+  const handleSelectSingleFileUri = async (data: { uri: string; metadata: any }) => {
+    const newFile: FileAnnotation = {
       file_id: generate_id(),
       uri: data.uri,
       description: "",
       tags: [],
       annotated_at: null,
       added_at: utcNow(),
-      uploaded: false,
       metadata: data.metadata,
     };
 
@@ -252,12 +253,19 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
 
     if (!file_uris.includes(newFile.uri)) {
       setFiles([...group.files, newFile]);
+      await handleUploadFiles([newFile]);
     }
 
     if (flowType == "individual-then-group") {
       setActiveFileUri(newFile.uri);
       setStep("annotate-individual");
     }
+  };
+
+  const handleUploadFiles = async (filesToUpload: FileAnnotation[]) => {
+    console.log("uploading", filesToUpload.length, "files");
+    const promises = filesToUpload.map((file) => uploadAndWriteFile(file));
+    await Promise.all(promises);
   };
 
   const handleAnnotateIndividualDone = () => {
