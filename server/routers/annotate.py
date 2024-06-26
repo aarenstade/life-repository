@@ -150,6 +150,66 @@ async def insert_file_annotation(request: Request):
     return {"message": "File and related data inserted successfully"}
 
 
+@router.post("/update/file_descriptions", response_model=dict)
+async def update_file_annotation(request: Request):
+    db = get_db()
+
+    file = await request.json()
+
+    file_id = file["file_id"]
+    file_description = file["description"]
+    date_description = file.get("date_description")
+
+    file_description_data = {
+        "file_id": file_id,
+        "manual_description": file_description,
+        "date_description": date_description,
+        "generated_description": None,
+        "generated_description_model": None,
+    }
+
+    response = db.update(
+        "file_descriptions", file_description_data, {"file_id": file_id}
+    )
+    print(response)
+    return {"message": "File description updated successfully"}
+
+
+@router.post("/update/file_tags", response_model=dict)
+async def update_file_tags(request: Request):
+    db = get_db()
+
+    file = await request.json()
+    file_id = file["file_id"]
+    file_tags = file["tags"]
+
+    db.delete("file_tags", {"file_id": file_id})
+
+    for tag in file_tags:
+        file_tag_data = {"file_id": file_id, "tag_id": tag["id"]}
+        db.insert("file_tags", file_tag_data)
+
+    return {"message": "File tags updated successfully"}
+
+
+@router.post("/delete/file", response_model=dict)
+async def delete_file_annotation(request: Request):
+    db = get_db()
+
+    body = await request.json()
+    file_id = body["file_id"]
+
+    file_record = db.select("files", "path", {"id": file_id})
+
+    if file_record:
+        file_path = file_record[0]["path"]
+        os.remove(file_path)
+        db.delete("files", {"id": file_id})
+        return {"message": "File deleted successfully"}
+
+    return {"message": "File not found"}
+
+
 @router.post("/insert/group", response_model=dict)
 async def insert_group_annotation(request: Request):
     db = get_db()
