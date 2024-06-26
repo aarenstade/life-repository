@@ -156,8 +156,22 @@ async def get_thumbnail_from_file_id(file_id: str):
 
 
 @router.post("/upload-file/")
-async def upload_file(file: UploadFile = File(...), metadata: str = Form(...)):
+async def upload_file(
+    file: UploadFile = File(...), metadata: str = Form(...), file_id: str = Form(...)
+):
     file_size = len(await file.read())
+
+    if file_id:
+        db = get_db()
+        file_records = db.select("files", "path", {"id": file_id})
+        file_path = file_records[0].get("path") if file_records else None
+        if file_path and os.path.exists(file_path):
+            print("bypassing upload, file already exists")
+            return JSONResponse(
+                status_code=200,
+                content={"message": "File already uploaded", "path": file_path},
+            )
+
     if file_size > MAX_FILE_UPLOAD_SIZE_BYTES:
         raise HTTPException(status_code=413, detail="File size exceeds limit of 10MB")
 
