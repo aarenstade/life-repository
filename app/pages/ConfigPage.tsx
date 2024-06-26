@@ -3,6 +3,7 @@ import { Button, TextInput, Text, View, StyleSheet, Alert } from "react-native";
 import useConfig from "../hooks/useConfig";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { useAnnotationDrafts, useActiveAnnotation } from "../state/annotations";
+import { createDefaultGroup } from "../config/annotations";
 
 interface ConfigPageProps {}
 
@@ -16,7 +17,7 @@ const ConfigPage: FC<ConfigPageProps> = () => {
   const setStatus = useActiveAnnotation((state) => state.setStatus);
 
   const resetActiveAnnotation = () => {
-    setGroup(null);
+    setGroup(createDefaultGroup("individual-then-group"));
     setStep("add-type");
     setStatus("annotating");
   };
@@ -41,9 +42,15 @@ const ConfigPage: FC<ConfigPageProps> = () => {
           style: "cancel",
         },
         {
-          text: "Reset",
+          text: "Reset Drafts",
           onPress: () => {
             resetDrafts([]);
+          },
+          style: "destructive",
+        },
+        {
+          text: "Reset Active",
+          onPress: () => {
             resetActiveAnnotation();
           },
           style: "destructive",

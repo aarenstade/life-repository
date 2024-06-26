@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AnnotationFlowType, AnnotationGroup, FileAnnotation, Tag } from "../types/annotation";
+import { createDefaultGroup } from "../config/annotations";
 
 interface AnnotationDraftsState {
   draftGroups: AnnotationGroup[];
@@ -38,13 +39,13 @@ interface ActiveAnnotationState {
 export const useActiveAnnotation = create<ActiveAnnotationState>()(
   persist(
     (set) => ({
-      group: null,
+      group: createDefaultGroup("individual-then-group"),
       setGroup: (group) => set({ group }),
       setGroupTags: (tags) => set((state) => ({ group: { ...state.group, tags } })),
       setFlowType: (flowType) => set((state) => ({ group: { ...state.group, flow_type: flowType } })),
       setFiles: (files) => set((state) => ({ group: { ...state.group, files } })),
-      updateFile: (file) => set((state) => ({ group: { ...state.group, files: state.group.files.map((f) => (f.uri === file.uri ? file : f)) } })),
-      removeFile: (fileUri) => set((state) => ({ group: { ...state.group, files: state.group.files.filter((file) => file.uri !== fileUri) } })),
+      updateFile: (file) => set((state) => ({ group: { ...state.group, files: state.group.files?.map((f) => (f.uri === file.uri ? file : f)) } })),
+      removeFile: (fileUri) => set((state) => ({ group: { ...state.group, files: state.group.files?.filter((file) => file.uri !== fileUri) } })),
       step: "add-type",
       setStep: (step) => set({ step }),
       status: "annotating",
