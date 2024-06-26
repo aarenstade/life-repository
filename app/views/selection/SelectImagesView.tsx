@@ -14,8 +14,8 @@ const SelectImagesView: FC<SelectImagesViewProps> = ({ images, onSelectSingleIma
     <View style={styles.selectImagesContainer}>
       <ImageCameraPicker
         images={images}
-        onImagesChanged={onSelectMultipleImages}
-        onImageSelect={onSelectSingleImage}
+        onMultiImageSelect={onSelectMultipleImages}
+        onSingleImageSelect={onSelectSingleImage}
         selectMultiple={selectMultiple}
       />
     </View>

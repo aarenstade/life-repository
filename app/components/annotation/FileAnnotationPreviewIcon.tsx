@@ -17,7 +17,7 @@ const FileAnnotationPreviewIcon: FC<FileAnnotationPreviewIconProps> = ({ file, o
   const fileType = file.uri.split(".").pop()?.toLowerCase();
 
   const renderDeleteButton = () => (
-    <TouchableOpacity style={{ position: "absolute", top: -10, right: -10, padding: 5, zIndex: 1 }} onPress={onDelete}>
+    <TouchableOpacity style={{ position: "absolute", top: -15, right: -15, padding: 5, zIndex: 1 }} onPress={onDelete}>
       <View style={{ backgroundColor: "white", borderRadius: 50, padding: 2 }}>
         <Feather name='x' size={18} color='black' />
       </View>
@@ -66,9 +66,8 @@ const FileAnnotationPreviewIcon: FC<FileAnnotationPreviewIconProps> = ({ file, o
       case "gif":
         return (
           <FileDisplay
-            file_id={is_uploaded ? file.file_id : undefined}
-            uri={is_uploaded ? undefined : file.uri}
-            show_thumbnail
+            // file_id={is_uploaded ? file.file_id : undefined}
+            uri={file.uri}
             style={{ width: 100, height: 100, margin: 10 }}
           />
         );
@@ -118,8 +117,9 @@ const FileAnnotationPreviewIcon: FC<FileAnnotationPreviewIconProps> = ({ file, o
           }}
         >
           {renderFilePreview()}
+          <View style={{ position: "absolute", bottom: -8, left: -8, padding: 5 }}>{renderStatusIcon()}</View>
         </View>
-        <View style={{ position: "absolute", top: -10, left: 0, padding: 5 }}>{renderStatusIcon()}</View>
+
         {renderFileDetails()}
       </View>
     </TouchableOpacity>

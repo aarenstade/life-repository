@@ -7,12 +7,12 @@ import * as FileSystem from "expo-file-system";
 
 interface ImageCameraPickerProps {
   images: { uri: string; metadata: any }[];
-  onImagesChanged?: (images: { uri: string; metadata: any }[]) => void;
-  onImageSelect?: (image: { uri: string; metadata: any }) => void;
+  onMultiImageSelect?: (images: { uri: string; metadata: any }[]) => void;
+  onSingleImageSelect?: (image: { uri: string; metadata: any }) => void;
   selectMultiple?: boolean;
 }
 
-const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged, onImageSelect, selectMultiple }) => {
+const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onMultiImageSelect, onSingleImageSelect, selectMultiple }) => {
   const requestCameraPermissions = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -66,18 +66,17 @@ const ImageCameraPicker: FC<ImageCameraPickerProps> = ({ images, onImagesChanged
         })
       );
 
-      if (selectMultiple && onImagesChanged) {
+      if (selectMultiple && onMultiImageSelect) {
         const allImages = Array.from(new Set([...images, ...imageUris]));
-        onImagesChanged(allImages);
-      } else if (!selectMultiple && onImageSelect && imageUris.length > 0) {
-        onImageSelect(imageUris[0]);
+        onMultiImageSelect(allImages);
+      } else if (!selectMultiple && onSingleImageSelect && imageUris.length > 0) {
+        onSingleImageSelect(imageUris[0]);
       }
     }
   };
 
   const saveImagePermanently = async (tempUri: string) => {
     const fileInfo = await FileSystem.getInfoAsync(tempUri);
-    console.log(fileInfo);
     if (!fileInfo.exists) {
       throw new Error("File does not exist");
     }
