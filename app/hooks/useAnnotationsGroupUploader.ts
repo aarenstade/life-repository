@@ -1,19 +1,44 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActiveAnnotation } from "../state/annotations";
 import { AnnotationGroup, FileAnnotation } from "../types/annotation";
 import * as FileSystem from "expo-file-system";
 import fetchAPI from "../lib/api";
 import useConfigStore from "../state/config";
+import { MAX_UPLOAD_FILE_SIZE_BYTES } from "../config/general";
+import _ from "lodash";
 
 const useAnnotationsGroupUploader = () => {
   const { group, updateFile } = useActiveAnnotation((store) => ({ group: store.group, updateFile: store.updateFile }));
   const [isUploading, setIsUploading] = useState(false);
-  const [statusMessageStream, setStatusMessageStream] = useState<{ type: "INFO" | "SUCCESS" | "WARNING" | "ERROR"; text: string }[]>([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const api_url = useConfigStore((state) => state.api_url);
 
-  const uploadFile = async (file: Partial<FileAnnotation>, apiUrl: string): Promise<{ success: boolean; data?: any; error?: string }> => {
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (isSuccess) {
+      timeout = setTimeout(() => {
+        setIsSuccess(false);
+      }, 5000);
+    }
+    return () => clearTimeout(timeout);
+  }, [isSuccess]);
+
+  const uploadStats = useMemo(() => {
+    if (!group || !group.files) return { totalFiles: 0, uploadedFiles: 0, pendingFiles: 0 };
+
+    const totalFiles = group.files.length;
+    const uploadedFiles = group.files.filter((file) => file.status == "uploaded").length;
+    const pendingFiles = totalFiles - uploadedFiles;
+
+    return { totalFiles, uploadedFiles, pendingFiles };
+  }, [group]);
+
+  const uploadFile = async (
+    file: Partial<FileAnnotation>,
+    apiUrl: string
+  ): Promise<{ success: boolean; data: Record<string, any>; error?: string }> => {
     try {
+      console.log("Starting upload of file", file.file_id);
       const fileUri = file.uri;
       const fileName = fileUri.split("/").pop();
       const fileType = fileName.split(".").pop();
@@ -21,11 +46,14 @@ const useAnnotationsGroupUploader = () => {
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
 
       if (!fileInfo.exists) {
+        console.log("File does not exist", file.file_id);
         throw new Error("File does not exist");
       }
 
       const fileSize = fileInfo.size || 0;
-      if (fileSize > 10000000) {
+
+      if (fileSize > MAX_UPLOAD_FILE_SIZE_BYTES) {
+        console.log("File size exceeds limit of 10MB", file.file_id);
         throw new Error("File size exceeds limit of 10MB");
       }
 
@@ -57,7 +85,7 @@ const useAnnotationsGroupUploader = () => {
 
       return { success: true, data: responseData };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, data: null };
     }
   };
 
@@ -69,7 +97,7 @@ const useAnnotationsGroupUploader = () => {
       throw new Error(response.message || "Failed to write file data");
     }
 
-    return response.data;
+    return response;
   };
 
   const writeGroupData = async (group: AnnotationGroup) => {
@@ -88,82 +116,143 @@ const useAnnotationsGroupUploader = () => {
     return response;
   };
 
-  const uploadAndWriteFile = async (file: FileAnnotation) => {
+  const checkFileExists = async (
+    file: FileAnnotation
+  ): Promise<{ exists: boolean; exists_path: boolean; exists_db: boolean; path: string; file_id: string }> | null => {
+    const response = await fetchAPI(api_url, "paths/file-exists/", { file_id: file.file_id }, "GET");
+    return response.code == 200 ? response.data : null;
+  };
+
+  const uploadAndWriteFile = async (file: FileAnnotation): Promise<{ status: "success" | "error"; file: FileAnnotation }> => {
     try {
-      updateFile({ ...file, status: "uploading" });
-      const result = await uploadFile(file, api_url);
-      if (result.success && result.data.path) {
-        await writeFileData(file, result.data.path);
-        updateFile({ ...file, status: "uploaded" });
+      const fileExists = await checkFileExists(file);
+      let filePath = fileExists.path || null;
+
+      if (fileExists && fileExists.exists) {
+        return { status: "success", file: { ...file, status: "uploaded" } };
+      }
+
+      let uploadResult = { success: true, data: null };
+      let writeResult = { success: true };
+
+      if (!fileExists.exists_path) {
+        uploadResult = await uploadFile(file, api_url);
+        if (uploadResult.success && uploadResult.data) {
+          filePath = uploadResult.data?.path || null;
+        }
+      }
+
+      if (!fileExists.exists_db) {
+        writeResult = await writeFileData(file, filePath);
+        if (writeResult.success) {
+          await updateFileDescriptionAndTags(file);
+        }
+      }
+
+      console.log({ uploadResult, writeResult });
+
+      if (uploadResult.success && writeResult.success) {
+        return { status: "success", file: { ...file, status: "uploaded" } };
       } else {
-        updateFile({ ...file, status: "error" });
+        return { status: "error", file: { ...file, status: "error" } };
       }
     } catch (error) {
-      updateFile({ ...file, status: "error" });
+      return { status: "error", file: { ...file, status: "error" } };
     }
   };
 
-  const updateFileDescriptionAndTags = async (file: FileAnnotation) => {
-    console.log("Updating file description and tags", file);
-    const promises = [
+  const updateFileDescriptionAndTags = async (file: FileAnnotation): Promise<{ status: "success" | "error"; file: FileAnnotation }> => {
+    const [descriptionResponse, tagsResponse] = await Promise.all([
       fetchAPI(api_url, "/annotations/update/file_descriptions", file, "POST"),
       fetchAPI(api_url, "/annotations/update/file_tags", file, "POST"),
-    ];
+    ]);
 
-    await Promise.all(promises);
+    if (descriptionResponse.success && tagsResponse.success) {
+      return { status: "success", file: { ...file, status: "uploaded" } };
+    } else {
+      return { status: "error", file: { ...file, status: "error" } };
+    }
   };
 
-  const uploadGroup = async () => {
-    setIsUploading(true);
+  const getGroupStatus = async (
+    group_id: string,
+    files: FileAnnotation[]
+  ): Promise<{ file_id: string; exists_db: boolean; exists_path: boolean }[]> => {
+    const res = await fetchAPI(api_url, "/annotations/group/status", { group_id, file_ids: files.map((file) => file.file_id) }, "POST");
+    return res.data || [];
+  };
+
+  const uploadGroup = async (newGroup: AnnotationGroup, config: { filter_uploaded_files: boolean } = { filter_uploaded_files: true }) => {
+    await writeGroupData(newGroup);
     console.log("STARTING GROUP UPLOAD!");
+    const groupStatus = await getGroupStatus(newGroup.group_id, newGroup.files);
+    console.log({ groupStatus });
 
-    const batchSize = 7;
-    let { files } = group;
+    const filesToUpdate = groupStatus.filter((file) => file.exists_db && file.exists_path);
+    const filesToUpload = groupStatus.filter((file) => !file.exists_db || !file.exists_path);
 
-    const filesToUpload = files.filter((file) => file.status != "uploaded");
-    const filesToUpdate = files.filter((file) => file.status === "uploaded");
+    console.log(`Number of files to update: ${filesToUpdate.length}`);
+    console.log(`Number of files to upload: ${filesToUpload.length}`);
 
-    if (filesToUpload.length == 0 && filesToUpdate.length == 0) {
-      setIsSuccess(true);
-      return;
+    setIsUploading(true);
+
+    for (let i = 0; i < filesToUpload.length; i += 12) {
+      const batch = filesToUpload.slice(i, i + 12).map((file) => file.file_id);
+      const batchFiles = newGroup.files.filter((file) => batch.includes(file.file_id));
+      batchFiles.forEach((file) => updateFile({ ...file, status: "uploading" }));
+      const results = await Promise.all(batchFiles.map(uploadAndWriteFile));
+      results.forEach((res) => updateFile(res.file));
     }
 
-    try {
-      for (let i = 0; i < filesToUpdate.length; i += batchSize) {
-        setStatusMessageStream((prev) => [
-          ...prev,
-          { type: "INFO", text: `Updating batch ${i / batchSize + 1} of ${Math.ceil(filesToUpdate.length / batchSize)}` },
-        ]);
-        const batch = filesToUpdate.slice(i, i + batchSize);
-        const updatePromises = batch.map((file) => updateFileDescriptionAndTags(file));
-        await Promise.all(updatePromises);
-      }
-    } catch (error) {
-      console.error("Error updating files", error);
-    }
+    const updateFiles = filesToUpdate.map((file) => newGroup.files.find((f) => f.file_id === file.file_id) as FileAnnotation);
+    const results = await Promise.all(updateFiles.map(updateFileDescriptionAndTags));
+    results.forEach((res) => updateFile(res.file));
 
-    await writeGroupData(group);
+    await writeFileGroups(newGroup);
 
-    try {
-      for (let i = 0; i < filesToUpload.length; i += batchSize) {
-        setStatusMessageStream((prev) => [
-          ...prev,
-          { type: "INFO", text: `Uploading batch ${i / batchSize + 1} of ${Math.ceil(filesToUpload.length / batchSize)}` },
-        ]);
-        const batch = files.slice(i, i + batchSize);
-        const uploadPromises = batch.map((file) => uploadAndWriteFile(file));
-        await Promise.all(uploadPromises);
-      }
-      await writeFileGroups(group);
-      setIsSuccess(true);
-    } catch (error) {
-      console.error("Error uploading files", error);
-    } finally {
-      setIsUploading(false);
-    }
+    setIsSuccess(true);
+    setIsUploading(false);
+
+    // const batchSize = 12;
+    // let { files } = newGroup;
+
+    // await writeGroupData(newGroup);
+
+    // const uploadFileBatch = async (batch: FileAnnotation[]) => {
+    //   const concurrentUploads = batch.map(async (file) => {
+    //     try {
+    //       const response = await uploadAndWriteFile(file);
+    //       if (response.status === "success") {
+    //         updateFile({ ...file, status: "uploaded" });
+    //       } else {
+    //         updateFile({ ...file, status: "error" });
+    //       }
+    //     } catch {
+    //       updateFile({ ...file, status: "error" });
+    //     }
+    //   });
+
+    //   await Promise.all(concurrentUploads);
+    // };
+
+    // try {
+    //   for (let i = 0; i < files.length; i += batchSize) {
+    //     console.log(`Processing batch ${i / batchSize + 1} of ${Math.ceil(files.length / batchSize)}`);
+    //     const batch = files.slice(i, i + batchSize);
+    //     batch.forEach((file) => updateFile({ ...file, status: "uploading" }));
+    //     await uploadFileBatch(batch);
+    //   }
+    //   setIsSuccess(true);
+    // } catch (error) {
+    //   console.error("Error processing files", error);
+    // } finally {
+    //   setIsUploading(false);
+    // }
+
+    // await writeFileGroups(newGroup);
   };
 
-  return { isUploading, isSuccess, uploadGroup, uploadFile, uploadAndWriteFile, statusMessageStream };
+  return { isUploading, isSuccess, uploadStats, uploadGroup, uploadFile, uploadAndWriteFile, updateFileDescriptionAndTags };
 };
 
 export default useAnnotationsGroupUploader;
