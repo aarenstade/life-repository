@@ -16,6 +16,20 @@ class SupabaseDatabaseAdapter(BaseSQLDatabaseAdapter):
             print(f"Error inserting data into {table}: {e}")
             return []
 
+    def upsert(
+        self, table: str, data: Dict[str, Any], conflict_columns=["id"]
+    ) -> Dict[str, Any]:
+        try:
+            response = (
+                self.client.table(table)
+                .upsert(data, on_conflict=conflict_columns)
+                .execute()
+            )
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"Error upserting data into {table}: {e}")
+            return []
+
     def select(
         self, table: str, columns: str = "*", filters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:

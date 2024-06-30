@@ -128,6 +128,36 @@ async def list_files_recursive(request: Request, path: str):
         raise HTTPException(status_code=404, detail="Directory not found")
 
 
+@router.get("/file-exists/")
+async def file_exists(path: str = None, file_id: str = None):
+    if not path and not file_id:
+        print("file_exists: either path or file_id must be provided")
+        raise HTTPException(
+            status_code=400, detail="Either path or file_id must be provided"
+        )
+
+    db = get_db()
+    file = None
+    if file_id:
+        file = db.select("files", "path", {"id": file_id})
+        path = file[0].get("path") if file else None
+    elif path:
+        file = db.select("files", "path", {"path": path})
+
+    db_path = file[0].get("path") if file else None
+
+    exists_path = os.path.exists(path) if path else False
+    exists_db = file and os.path.samefile(db_path, path) if path else False
+
+    return {
+        "exists": exists_path and exists_db,
+        "exists_path": exists_path,
+        "exists_db": exists_db,
+        "file_id": file_id,
+        "path": path,
+    }
+
+
 @router.get("/get-file/")
 async def get_file(path: str):
     if not os.path.exists(path):
@@ -159,20 +189,11 @@ async def get_thumbnail_from_file_id(file_id: str):
 async def upload_file(
     file: UploadFile = File(...), metadata: str = Form(...), file_id: str = Form(...)
 ):
+    print("Uploading file...")
     file_size = len(await file.read())
 
-    if file_id:
-        db = get_db()
-        file_records = db.select("files", "path", {"id": file_id})
-        file_path = file_records[0].get("path") if file_records else None
-        if file_path and os.path.exists(file_path):
-            print("bypassing upload, file already exists")
-            return JSONResponse(
-                status_code=200,
-                content={"message": "File already uploaded", "path": file_path},
-            )
-
     if file_size > MAX_FILE_UPLOAD_SIZE_BYTES:
+        print("file_size > MAX_FILE_UPLOAD_SIZE_BYTES")
         raise HTTPException(status_code=413, detail="File size exceeds limit of 10MB")
 
     await file.seek(0)

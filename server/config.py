@@ -91,7 +91,7 @@ DATA_FILE_TYPES = [
     "dat",
 ]
 
-MAX_FILE_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024  # 100 MB
+MAX_FILE_UPLOAD_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB
 
 
 class Config:

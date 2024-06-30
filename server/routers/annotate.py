@@ -1,4 +1,6 @@
 import os
+import traceback
+from typing import List
 from fastapi import APIRouter, HTTPException, Request
 
 from config import Config
@@ -85,8 +87,72 @@ async def get_all_group_ids():
     return group_ids
 
 
-"""
+@router.post("/group/status", response_model=List[dict])
+async def get_group_status(request: Request):
+    body = await request.json()
 
+    group_id = body["group_id"]
+    file_ids = body["file_ids"]
+
+    db = get_db()
+    group = db.select("groups", "*", {"id": group_id})
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    group = group[0]
+    file_statuses = []
+
+    for file_id in file_ids:
+        file = db.select("files", "*", {"id": file_id})
+        if not file:
+            file_statuses.append(
+                {
+                    "file_id": file_id,
+                    "exists_path": False,
+                    "exists_db": False,
+                    "data": None,
+                }
+            )
+            continue
+
+        file = file[0]
+        file_path = file.get("path")
+        exists_path = os.path.exists(file_path)
+        exists_db = True
+
+        file_groups = db.select(
+            "file_groups", "*", {"file_id": file_id, "group_id": group_id}
+        )
+        if not file_groups:
+            db.insert("file_groups", {"file_id": file_id, "group_id": group_id})
+
+        file_data = {
+            "file_id": file_id,
+            "uri": file.get("path"),
+            "description": file.get("description"),
+            "date_description": file.get("date_description"),
+            "tags": file.get("tags"),
+            "annotated_at": file.get("created_at"),
+            "added_at": file.get("created_at"),
+            "status": "uploaded",
+            "uploaded_at": file.get("created_at"),
+            "metadata": file.get("metadata"),
+        }
+
+        file_statuses.append(
+            {
+                "file_id": file_id,
+                "exists_path": exists_path,
+                "exists_db": exists_db,
+                "data": file_data,
+            }
+        )
+
+    return file_statuses
+
+
+"""
 Write Functions
 
 """
@@ -94,60 +160,64 @@ Write Functions
 
 @router.post("/insert/file", response_model=dict)
 async def insert_file_annotation(request: Request):
-    db = get_db()
+    try:
+        db = get_db()
 
-    body = await request.json()
-    file, path = body["file"], body["path"]
+        body = await request.json()
+        file, path = body["file"], body["path"]
 
-    if not file or not path:
-        raise HTTPException(status_code=400, detail="File or path is required")
+        if not file or not path:
+            raise HTTPException(status_code=400, detail="File or path is required")
 
-    file_id = file["file_id"]
-    file_uri = file["uri"]
-    file_description = file["description"]
-    date_description = file.get("date_description")
-    file_tags = file["tags"]
+        file_id = file["file_id"]
+        file_uri = file["uri"]
+        file_description = file["description"]
+        date_description = file.get("date_description")
+        file_tags = file["tags"]
 
-    thumbnail_extractor = ThumbnailExtractor(
-        media_path=path, output_dir=config.thumbnails_dir
-    )
-    thumbnail_paths = thumbnail_extractor.extract()
-    thumbnail_paths = thumbnail_paths if thumbnail_paths else []
-
-    file_data = {
-        "id": file_id,
-        "name": os.path.basename(file_uri),
-        "type": "IMAGE",
-        "path": path,
-    }
-
-    db.insert("files", file_data)
-
-    for thumbnail_path in thumbnail_paths:
-        db.insert(
-            "file_thumbnails",
-            {
-                "file_id": file_id,
-                "thumbnail_path": thumbnail_path,
-            },
+        thumbnail_extractor = ThumbnailExtractor(
+            media_path=path, output_dir=config.thumbnails_dir
         )
+        thumbnail_paths = thumbnail_extractor.extract()
+        thumbnail_paths = thumbnail_paths if thumbnail_paths else []
 
-    file_description_data = {
-        "file_id": file_id,
-        "manual_description": file_description,
-        "date_description": date_description,
-        "generated_description": None,
-        "generated_description_model": None,
-    }
+        file_data = {
+            "id": file_id,
+            "name": os.path.basename(file_uri),
+            "type": "IMAGE",
+            "path": path,
+        }
 
-    db.insert("file_descriptions", file_description_data)
+        db.upsert("files", file_data)
 
-    for tag in file_tags:
-        file_tag_data = {"file_id": file_id, "tag_id": tag["id"]}
-        db.insert("file_tags", file_tag_data)
+        for thumbnail_path in thumbnail_paths:
+            db.upsert(
+                "file_thumbnails",
+                {
+                    "file_id": file_id,
+                    "thumbnail_path": thumbnail_path,
+                },
+            )
 
-    print("File and related data inserted successfully")
-    return {"message": "File and related data inserted successfully"}
+        file_description_data = {
+            "file_id": file_id,
+            "manual_description": file_description,
+            "date_description": date_description,
+            "generated_description": None,
+            "generated_description_model": None,
+        }
+
+        db.upsert("file_descriptions", file_description_data)
+
+        for tag in file_tags:
+            file_tag_data = {"file_id": file_id, "tag_id": tag["id"]}
+            db.upsert("file_tags", file_tag_data)
+
+        print("File and related data inserted successfully")
+        return {"message": "File and related data inserted successfully"}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @router.post("/update/file_descriptions", response_model=dict)
@@ -187,7 +257,7 @@ async def update_file_tags(request: Request):
 
     for tag in file_tags:
         file_tag_data = {"file_id": file_id, "tag_id": tag["id"]}
-        db.insert("file_tags", file_tag_data)
+        db.upsert("file_tags", file_tag_data)
 
     return {"message": "File tags updated successfully"}
 
@@ -229,11 +299,11 @@ async def insert_group_annotation(request: Request):
         "date_description": date_description,
     }
 
-    db.insert("groups", group_data)
+    db.upsert("groups", group_data)
 
     for tag in tags:
         group_tag_data = {"group_id": group_id, "tag_id": tag["id"]}
-        db.insert("group_tags", group_tag_data)
+        db.upsert("group_tags", group_tag_data)
 
     print("Group inserted successfully")
     return {"message": "Group inserted successfully"}
@@ -253,12 +323,12 @@ async def insert_file_groups(request: Request):
     for file_id in file_ids:
         try:
             group_file_data = {"group_id": group_id, "file_id": file_id}
-            db.insert("file_groups", group_file_data)
+            db.upsert("file_groups", group_file_data)
 
             if file_id == cover_image_file_id:
-                db.update("groups", {"cover_image_file_id": file_id}, {"id": group_id})
+                db.upsert("groups", {"cover_image_file_id": file_id}, {"id": group_id})
 
         except Exception as e:
-            print(f"Failed to insert file group data for file_id {file_id}: {e}")
+            print(f"file_id {file_id}: Failed to insert file group data: {e}")
 
     return {"message": "File groups inserted successfully"}
