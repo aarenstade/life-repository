@@ -21,10 +21,6 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
   const [blob, setBlob] = useState<Blob | null>(null);
 
   useEffect(() => {
-    console.log(playbackDuration, playbackPosition);
-  }, [playbackDuration, playbackPosition]);
-
-  useEffect(() => {
     const updateDuration = () => setDuration((prevDuration) => prevDuration + 1);
     if (recording && !isPaused && timer === null) {
       setTimer(setInterval(updateDuration, 1000));
@@ -92,10 +88,8 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
           const uri = getRecordingUri();
           if (uri) {
             const blob = await audioUriToBlob(uri);
-            console.log(blob);
             if (blob) setBlob(blob);
             const { sound, status } = await Audio.Sound.createAsync({ uri });
-            console.log(uri);
             setPlaybackInstance(sound);
             if ("durationMillis" in status) {
               setPlaybackDuration(status.durationMillis);
@@ -149,7 +143,6 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
           }
         };
         xhr.onerror = (e) => {
-          console.log(e);
           reject(new TypeError("Network request failed"));
         };
         xhr.responseType = "blob";

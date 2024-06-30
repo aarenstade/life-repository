@@ -73,6 +73,11 @@ const groupViewStyles = StyleSheet.create({
     height: "100%",
     marginBottom: 20,
   },
+  retryButton: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+  },
 });
 
 export default AnnotationViewFileGroup;

@@ -9,6 +9,7 @@ import _ from "lodash";
 import ToggleField from "../../components/inputs/transcribe-inputs/ToggleField";
 import { useActiveAnnotation } from "../../state/annotations";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import useAnnotationsGroupUploader from "../../hooks/useAnnotationsGroupUploader";
 
 interface IndividualFileAnnotationProps {
   file: FileAnnotation;

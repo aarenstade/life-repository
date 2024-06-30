@@ -56,7 +56,7 @@ const fetchAPI = async (url: string, endpointName: string, params?: any, method:
 
     return { success: false, code: res.status, data };
   } catch (error) {
-    console.error(`fetch error: ${JSON.stringify(error)}`);
+    console.error(`fetch error: ${JSON.stringify(error)} for ${endpointName}`);
     return { success: false, message: error, code: 500 };
   }
 };

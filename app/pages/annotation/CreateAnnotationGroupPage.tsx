@@ -16,11 +16,12 @@ import { CreateAnnotationGroupPageProps } from "../../App";
 import fetchAPI from "../../lib/api";
 import useConfigStore from "../../state/config";
 import { createDefaultGroup } from "../../config/annotations";
+import { Feather } from "@expo/vector-icons";
 
 const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigation, route }) => {
   const api_url = useConfigStore((state) => state.api_url);
 
-  const { isUploading, isSuccess, uploadGroup, uploadFile, uploadAndWriteFile, statusMessageStream } = useAnnotationsGroupUploader();
+  const { isUploading, isSuccess, uploadStats, uploadGroup, uploadAndWriteFile } = useAnnotationsGroupUploader();
   const steps = ["add-type", "select-files", "annotate-group", "annotate-individual", "review"];
 
   const group_id = route.params?.group_id || null;
@@ -97,8 +98,7 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
         {
           text: "OK",
           onPress: () => {
-            console.log("STARTING UPLOAD OF GROUP");
-            uploadGroup();
+            uploadGroup(group, { filter_uploaded_files: true });
           },
         },
       ]);
@@ -133,8 +133,6 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
   };
 
   const handleCancel = () => {
-    console.log("CANCELLING");
-
     if (flowType == "individual-then-group" && step == "annotate-individual") {
       setStep("select-files");
       return;
@@ -215,6 +213,14 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
     console.log(response);
   };
 
+  const handleReuploadGroup = async () => {
+    await uploadGroup(group, { filter_uploaded_files: true });
+  };
+
+  const handleSaveLocally = () => {
+    insertDraft();
+  };
+
   const handleFilesChange = (updatedFiles: FileAnnotation[]) => setFiles(updatedFiles);
   const handleSingleFileChange = (updatedFile: FileAnnotation) => updateFile(updatedFile);
 
@@ -256,16 +262,17 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
       await handleUploadFiles([newFile]);
     }
 
-    if (flowType == "individual-then-group") {
-      setActiveFileUri(newFile.uri);
-      setStep("annotate-individual");
-    }
+    // if (flowType == "individual-then-group") {
+    //   setActiveFileUri(newFile.uri);
+    //   setStep("annotate-individual");
+    // }
   };
 
   const handleUploadFiles = async (filesToUpload: FileAnnotation[]) => {
-    console.log("uploading", filesToUpload.length, "files");
+    filesToUpload.forEach((file) => updateFile({ ...file, status: "uploading" }));
     const promises = filesToUpload.map((file) => uploadAndWriteFile(file));
-    await Promise.all(promises);
+    const results = await Promise.all(promises);
+    results.forEach((result) => updateFile(result.file));
   };
 
   const handleAnnotateIndividualDone = () => {
@@ -375,44 +382,93 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
 
   return (
     <View style={mainStyles.container}>
-      <DismissKeyboardView>{view}</DismissKeyboardView>
-      <ScrollView>
-        {group.files && (
-          <FilePreviewGrid files={group.files || []} onFileClick={handleFileClick} onFileRemove={step != "review" ? handleFileRemove : undefined} />
+      <View style={{ flexDirection: "row", width: "100%" }}>
+        <View style={{ width: "33.33%" }}>
+          <View
+            style={{
+              flexDirection: "column",
+              gap: 10,
+              backgroundColor: "#f8f9fa",
+              borderBottomLeftRadius: 8,
+              padding: 10,
+            }}
+          >
+            <View style={{ flexDirection: "column", justifyContent: "space-between" }}>
+              <Text style={{ fontSize: 10, fontWeight: "bold" }}>total files: {uploadStats.totalFiles}</Text>
+              <Text style={{ fontSize: 10, fontWeight: "bold" }}>uploaded: {uploadStats.uploadedFiles}</Text>
+              <Text style={{ fontSize: 10, fontWeight: "bold" }}>pending: {uploadStats.pendingFiles}</Text>
+            </View>
+            <TouchableOpacity
+              style={{
+                padding: 8,
+                borderRadius: 4,
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: isUploading ? "#ffc107" : isSuccess ? "#28a745" : "#007bff",
+              }}
+              onPress={handleReuploadGroup}
+            >
+              <Feather name={isUploading ? "upload-cloud" : isSuccess ? "check-circle" : "refresh-cw"} size={18} color='#ffffff' />
+              <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 14, marginLeft: 4 }}>
+                {isUploading ? `${uploadStats.uploadedFiles}/${uploadStats.totalFiles}` : isSuccess ? "Success" : "Retry"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                padding: 8,
+                borderRadius: 4,
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "#6c757d",
+              }}
+              onPress={handleSaveLocally}
+            >
+              <Feather name='save' size={18} color='#ffffff' />
+              <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 14, marginLeft: 4 }}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={{ width: "66.67%" }}>
+          <DismissKeyboardView style={{}}>{view}</DismissKeyboardView>
+        </View>
+      </View>
+      <View style={{ flex: 1 }}>
+        <ScrollView
+          ref={(ref) => {
+            if (ref) ref.scrollToEnd({ animated: true });
+          }}
+        >
+          {group.files && (
+            <FilePreviewGrid files={group.files || []} onFileClick={handleFileClick} onFileRemove={step != "review" ? handleFileRemove : undefined} />
+          )}
+        </ScrollView>
+      </View>
+      <>
+        {step == "review" && (
+          <TouchableOpacity
+            style={{
+              padding: 12,
+              borderRadius: 4,
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#007bff",
+              justifyContent: "center",
+              marginVertical: 10,
+            }}
+            onPress={handleNextStep}
+          >
+            <Feather name='upload-cloud' size={18} color='#ffffff' />
+            <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 14, marginLeft: 4 }}>Upload</Text>
+          </TouchableOpacity>
         )}
-      </ScrollView>
-
-      {!isUploading && !isSuccess && (
         <MultiStepChinView
-          continueText={step == "review" ? "Upload" : "Continue"}
+          continueText='Continue'
           onContinue={handleNextStep}
           onCancel={handleCancel}
           onBack={steps.indexOf(step) > 0 ? handlePreviousStep : undefined}
         />
-      )}
-      {/* 
-      {isUploading && !isSuccess && (
-        <View style={{ flex: 1 }}>
-          <FlatList
-            data={statusMessageStream}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <View
-                style={{
-                  padding: 8,
-                  backgroundColor:
-                    item.type === "INFO" ? "#17a2b8" : item.type === "SUCCESS" ? "#28a745" : item.type === "WARNING" ? "#ffc107" : "#dc3545",
-                  marginVertical: 4,
-                  borderRadius: 4,
-                }}
-              >
-                <Text style={{ color: "#fff" }}>{item.text}</Text>
-              </View>
-            )}
-          />
-        </View>
-      )} */}
-      {isSuccess && (
+      </>
+      {step == "review" && isSuccess && (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={{ fontSize: 24, fontWeight: "bold", color: "#ffffff", backgroundColor: "#28a745", padding: 8, borderRadius: 4 }}>
             Uploaded!
@@ -420,6 +476,7 @@ const CreateAnnotationGroupPage: FC<CreateAnnotationGroupPageProps> = ({ navigat
           <TouchableOpacity
             style={{ marginTop: 16, padding: 12, backgroundColor: "#007bff", borderRadius: 4 }}
             onPress={() => {
+              insertDraft();
               resetActiveAnnotation();
               resetState();
               navigation.navigate("home");

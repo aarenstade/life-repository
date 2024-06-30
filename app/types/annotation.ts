@@ -27,6 +27,7 @@ export interface FileAnnotation {
   uri: string;
   description: string;
   tags: Tag[];
+  path?: string;
   annotated_at: string;
   added_at: string;
   status?: "idle" | "error" | "uploading" | "uploaded";

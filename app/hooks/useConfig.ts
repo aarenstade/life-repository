@@ -63,7 +63,6 @@ const useConfig = () => {
       const currentTime = new Date().getTime();
       const timeDifference = (currentTime - lastFetchTime) / 1000;
 
-      console.log({ lastFetchTime, currentTime, timeDifference });
       return timeDifference > THRESHOLD_SECONDS;
     };
 

@@ -126,7 +126,6 @@ const FileSystemPage: React.FC<FileSystemPageProps> = () => {
 
   const handleLoadFile = (path: string) => {
     // Implement file loading logic here
-    console.log(`Load file at ${path}`);
   };
 
   const handleBack = () => {
